@@ -29,7 +29,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@puyodead1/fosscord-api-types": "^0.37.44",
-		"axios": "^1.3.5"
+		"axios": "^1.3.5",
+		"discord-api-types": "^0.37.38"
 	}
 }

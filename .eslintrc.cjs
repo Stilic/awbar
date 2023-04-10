@@ -1,4 +1,7 @@
 module.exports = {
+	rules: {
+		'@typescript-eslint/no-explicit-any': 'off'
+	},
 	root: true,
 	parser: '@typescript-eslint/parser',
 	extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
