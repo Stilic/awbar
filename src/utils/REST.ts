@@ -20,9 +20,11 @@ export class REST {
 	public async get<T>(path: string, queryParams: Record<string, any> = {}): Promise<T> {
 		return new Promise((resolve, reject) => {
 			return axios
-				.get(this.makeAPIUrl(path), { params: queryParams, headers: { Authorization: this.token } })
-				.then((res) => res.data)
-				.then(resolve)
+				.get(this.makeAPIUrl(path), {
+					params: queryParams,
+					headers: { Authorization: this.token }
+				})
+				.then((res) => resolve(res.data))
 				.catch(reject);
 		});
 	}
@@ -38,8 +40,7 @@ export class REST {
 					params: queryParams,
 					headers: { Authorization: this.token }
 				})
-				.then((res) => res.data)
-				.then(resolve)
+				.then((res) => resolve(res.data))
 				.catch(reject);
 		});
 	}
