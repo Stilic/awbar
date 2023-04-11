@@ -1,10 +1,11 @@
-<script type="ts">
+<script lang="ts">
 	import { Globals } from '../Globals';
 
-	async function getData() {
-		console.log(await Globals.instance.rest.get('ping'));
-	}
-	getData();
+	const data: any = Globals.instance.rest.get('ping');
 </script>
 
-<p>Test Page</p>
+{#await data then d}
+	<p>{Globals.instance.domain}</p>
+	<p>Instance name: {d.instance.name}</p>
+	<p>Instance name: {d.instance.description}</p>
+{/await}
