@@ -1,6 +1,7 @@
 module.exports = {
 	rules: {
-		'@typescript-eslint/no-explicit-any': 'off'
+		'@typescript-eslint/no-explicit-any': 'off',
+		'@typescript-eslint/no-inferrable-types': 'off'
 	},
 	root: true,
 	parser: '@typescript-eslint/parser',
