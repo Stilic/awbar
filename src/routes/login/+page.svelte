@@ -17,8 +17,8 @@
 				})
 				.then((r) => {
 					// TODO: Implement MFA
-					if ('token' in r && 'settings' in r) Globals.instance.rest.setToken(r.token);
-					else console.error('error on login');
+					// if ('token' in r && 'settings' in r) Globals.instance.rest.setToken(r.token);
+					// else console.error('error on login');
 				});
 		}
 	});

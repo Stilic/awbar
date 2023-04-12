@@ -18,9 +18,18 @@ export class User {
 	public premium_type: UserPremiumType | undefined;
 	public public_flags: UserFlags | undefined;
 
-	public readonly instance: Instance;
+	public get tag(): string {
+		return `${this.username}#${this.discriminator}`;
+	}
 
-	constructor(user: APIUser, instance: Instance) {
+	public get instanceTag(): string {
+		return `${this.tag}@${this.instance.domain}`;
+	}
+
+	public readonly instance: Instance;
+	private token: string;
+
+	constructor(user: APIUser, instance: Instance, token: string) {
 		this.id = user.id;
 		this.username = user.username;
 		this.discriminator = user.discriminator;
@@ -38,5 +47,18 @@ export class User {
 		this.public_flags = user.public_flags;
 
 		this.instance = instance;
+		this.token = token;
+	}
+
+	public async get<T>(path: string, queryParams: Record<string, any> = {}): Promise<T> {
+		return this.instance.rest.get(path, queryParams, this.token);
+	}
+
+	public async post<T, U>(
+		path: string,
+		data?: T,
+		queryParams: Record<string, any> = {}
+	): Promise<U> {
+		return this.instance.rest.post(path, data, queryParams, this.token);
 	}
 }
