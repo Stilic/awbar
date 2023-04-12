@@ -1,9 +1,7 @@
 import type { APIUser, Snowflake, UserFlags, UserPremiumType } from 'discord-api-types/v9';
+import type { Instance } from './Instance';
 
 export class User {
-	// TODO: make this an actual type
-	// public readonly domain: string;
-
 	public id: Snowflake;
 	public username: string;
 	public discriminator: string;
@@ -20,7 +18,9 @@ export class User {
 	public premium_type: UserPremiumType | undefined;
 	public public_flags: UserFlags | undefined;
 
-	constructor(user: APIUser) {
+	public readonly instance: Instance;
+
+	constructor(user: APIUser, instance: Instance) {
 		this.id = user.id;
 		this.username = user.username;
 		this.discriminator = user.discriminator;
@@ -36,5 +36,7 @@ export class User {
 		this.flags = user.flags;
 		this.premium_type = user.premium_type;
 		this.public_flags = user.public_flags;
+
+		this.instance = instance;
 	}
 }
