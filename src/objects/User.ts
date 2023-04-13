@@ -1,64 +1,60 @@
-import type { APIUser, Snowflake, UserFlags, UserPremiumType } from 'discord-api-types/v9';
-import type { Instance } from './Instance';
+import type {
+  APIUser,
+  Snowflake,
+  UserFlags,
+  UserPremiumType,
+} from '@puyodead1/fosscord-api-types/v9';
+import {computed, observable} from 'mobx';
+import type Instance from './Instance';
 
-export class User {
-	public id: Snowflake;
-	public username: string;
-	public discriminator: string;
-	public avatar: string | undefined;
-	public bot: boolean = false;
-	public system: boolean = false;
-	public mfa_enabled: boolean = false;
-	public banner: string | undefined;
-	public accent_color: number | undefined;
-	public locale: string | undefined;
-	public verified: boolean = false;
-	public email: string | undefined;
-	public flags: UserFlags | undefined;
-	public premium_type: UserPremiumType | undefined;
-	public public_flags: UserFlags | undefined;
+export default class User {
+  public id: Snowflake;
+  @observable public username: string;
+  @observable public discriminator: string;
+  @observable public avatar?: string;
+  @observable public bot: boolean = false;
+  @observable public bio?: string;
+  @observable public pronouns?: string;
+  @observable public system: boolean = false;
+  @observable public mfaEnabled: boolean = false;
+  @observable public banner?: string;
+  @observable public accentColor?: number;
+  @observable public themeColor?: number;
+  @observable public locale?: string;
+  @observable public verified: boolean = false;
+  @observable public email?: string;
+  @observable public flags?: UserFlags;
+  @observable public premiumType?: UserPremiumType;
+  public readonly premiumSince?: string;
+  @observable public publicFlags?: UserFlags;
 
-	public get tag(): string {
-		return `${this.username}#${this.discriminator}`;
-	}
+  @computed
+  public get tag(): string {
+    return `${this.username}#${this.discriminator}`;
+  }
 
-	public get instanceTag(): string {
-		return `${this.tag}@${this.instance.domain}`;
-	}
+  public readonly instance: Instance;
 
-	public readonly instance: Instance;
-	private token: string;
+  constructor(data: APIUser, instance: Instance) {
+    this.id = data.id;
+    this.username = data.username;
+    this.discriminator = data.discriminator;
+    if (data.avatar) this.avatar = data.avatar;
+    if (data.bot) this.bot = data.bot;
+    this.bio = data.bio;
+    if (data.system) this.system = data.system;
+    if (data.mfa_enabled) this.mfaEnabled = data.mfa_enabled;
+    if (data.banner) this.banner = data.banner;
+    if (data.accent_color) this.accentColor = data.accent_color;
+    this.themeColor = data.theme_colors;
+    this.locale = data.locale;
+    if (data.verified) this.verified = data.verified;
+    if (data.email) this.email = data.email;
+    this.flags = data.flags;
+    this.premiumType = data.premium_type;
+    this.premiumSince = data.premium_since;
+    this.publicFlags = data.public_flags;
 
-	constructor(user: APIUser, instance: Instance, token: string) {
-		this.id = user.id;
-		this.username = user.username;
-		this.discriminator = user.discriminator;
-		if (user.avatar) this.avatar = user.avatar;
-		if (user.bot) this.bot = user.bot;
-		if (user.system) this.system = user.system;
-		if (user.mfa_enabled) this.mfa_enabled = user.mfa_enabled;
-		if (user.banner) this.banner = user.banner;
-		if (user.accent_color) this.accent_color = user.accent_color;
-		this.locale = user.locale;
-		if (user.verified) this.verified = user.verified;
-		if (user.email) this.email = user.email;
-		this.flags = user.flags;
-		this.premium_type = user.premium_type;
-		this.public_flags = user.public_flags;
-
-		this.instance = instance;
-		this.token = token;
-	}
-
-	public async get<T>(path: string, queryParams: Record<string, any> = {}): Promise<T> {
-		return this.instance.rest.get(path, queryParams, this.token);
-	}
-
-	public async post<T, U>(
-		path: string,
-		data?: T,
-		queryParams: Record<string, any> = {}
-	): Promise<U> {
-		return this.instance.rest.post(path, data, queryParams, this.token);
-	}
+    this.instance = instance;
+  }
 }

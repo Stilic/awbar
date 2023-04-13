@@ -1,5 +1,5 @@
-import { Instance } from './objects/Instance';
+import {Instance} from './objects/Instance';
 
-export class Globals {
-	static readonly instance: Instance = new Instance('spacebar.stilic.ml');
+export default class Globals {
+  static readonly instance: Instance = new Instance('spacebar.stilic.ml');
 }
