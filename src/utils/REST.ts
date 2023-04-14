@@ -10,7 +10,7 @@ import type Instance from '../objects/Instance';
 export default class REST {
   // private static tokenStore: Writable<TokenStore> = persisted<TokenStore>('tokens', {});
 
-  instance: Instance;
+  readonly instance: Instance;
 
   constructor(instance: Instance) {
     this.instance = instance;

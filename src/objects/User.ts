@@ -4,7 +4,7 @@ import type {
   UserFlags,
   UserPremiumType,
 } from '@puyodead1/fosscord-api-types/v9';
-import {computed, observable} from 'mobx';
+import {action, computed, makeObservable, observable} from 'mobx';
 import type Instance from './Instance';
 
 export default class User {
@@ -25,7 +25,7 @@ export default class User {
   @observable email?: string;
   @observable flags?: UserFlags;
   @observable premium_type?: UserPremiumType;
-  readonly premium_since?: string;
+  premium_since?: string;
   @observable public_flags?: UserFlags;
 
   @computed
@@ -61,5 +61,12 @@ export default class User {
     this.public_flags = data.public_flags;
 
     this.instance = instance;
+
+    makeObservable(this);
+  }
+
+  @action
+  update(data: APIUser) {
+    Object.assign(this, data);
   }
 }

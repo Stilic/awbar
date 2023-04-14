@@ -18,6 +18,7 @@ import {
 import {action, makeObservable, observable, type IObservableArray, computed} from 'mobx';
 import type Guild from './Guild';
 import Message from './Message';
+import type Instance from './Instance';
 
 export default class Channel {
   id: Snowflake;
@@ -51,9 +52,9 @@ export default class Channel {
 
   @observable private readonly messages: IObservableArray<Message> = observable.array();
 
-  readonly guild: Guild;
+  readonly instance: Instance;
 
-  constructor(data: APIChannel, guild: Guild) {
+  constructor(data: APIChannel, instance: Instance) {
     this.id = data.id;
     this.created_at = data.created_at;
     this.name = data.name;
@@ -126,7 +127,7 @@ export default class Channel {
         break;
     }
 
-    this.guild = guild;
+    this.instance = instance;
 
     makeObservable(this);
   }
@@ -152,7 +153,7 @@ export default class Channel {
     if (around) opts = {...opts, around};
 
     // TODO: catch errors
-    const messages = await this.guild.instance.rest.get<RESTGetAPIChannelMessagesResult>(
+    const messages = await this.instance.rest.get<RESTGetAPIChannelMessagesResult>(
       Routes.channelMessages(this.id),
       opts,
     );
@@ -190,7 +191,7 @@ export default class Channel {
   @action
   async send(data: RESTPostAPIChannelMessageJSONBody) {
     // TODO: handle errors, highlight message as failed
-    return this.guild.instance.rest.post<
+    return this.instance.rest.post<
       RESTPostAPIChannelMessageJSONBody,
       RESTPostAPIChannelMessageResult
     >(Routes.channelMessages(this.id), data);

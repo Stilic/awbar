@@ -1,9 +1,10 @@
-import {ObservableMap, action, computed, observable} from 'mobx';
+import {ObservableMap, action, computed, makeObservable, observable} from 'mobx';
 import type {IAPILoginRequest, IAPILoginResponse} from '../interfaces/api';
 import REST from '../utils/REST';
 import User from './User';
-import type {APIUser} from '@puyodead1/fosscord-api-types/v9';
-import type Guild from './Guild';
+import type {APIChannel, APIUser, GatewayGuild, Snowflake} from '@puyodead1/fosscord-api-types/v9';
+import Guild from './Guild';
+import Channel from './Channel';
 
 export default class Instance {
   readonly domain: string;
@@ -11,18 +12,48 @@ export default class Instance {
 
   @observable readonly users: ObservableMap<string, User>;
   @observable readonly guilds: ObservableMap<string, Guild>;
+  @observable readonly privateChannels: ObservableMap<string, Channel>;
 
   constructor(domain: string) {
     this.domain = domain;
     this.rest = new REST(this);
 
-    this.users = new ObservableMap<string, User>();
-    this.guilds = new ObservableMap<string, Guild>();
+    this.users = new ObservableMap<Snowflake, User>();
+    this.guilds = new ObservableMap<Snowflake, Guild>();
+    this.privateChannels = new ObservableMap<Snowflake, Channel>();
+
+    makeObservable(this);
   }
 
   @action
-  addUser(user: APIUser) {
-    if (!this.users.has(user.id)) this.users.set(user.id, new User(user, this));
+  addUser(data: APIUser) {
+    if (!this.users.has(data.id)) this.users.set(data.id, new User(data, this));
+  }
+
+  @action
+  updateUser(data: APIUser) {
+    this.users.get(data.id)?.update(data);
+  }
+
+  @action
+  addGuild(data: GatewayGuild) {
+    if (!this.guilds.has(data.id)) this.guilds.set(data.id, new Guild(data, this));
+  }
+
+  @action
+  updateGuild(data: GatewayGuild) {
+    this.guilds.get(data.id)?.update(data);
+  }
+
+  @action
+  addPrivateChannel(data: APIChannel) {
+    if (!this.privateChannels.has(data.id))
+      this.privateChannels.set(data.id, new Channel(data, this));
+  }
+
+  @action
+  updatePrivateChannel(data: APIChannel) {
+    this.privateChannels.get(data.id)?.update(data);
   }
 
   getToken(credentials: IAPILoginRequest): Promise<string> {

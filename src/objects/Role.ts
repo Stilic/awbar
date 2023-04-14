@@ -1,6 +1,6 @@
 import type {APIRole, APIRoleTags} from '@puyodead1/fosscord-api-types/v9';
 import type Guild from './Guild';
-import {action, computed, observable} from 'mobx';
+import {action, computed, makeObservable, observable} from 'mobx';
 
 export default class Role {
   id: string;
@@ -31,6 +31,8 @@ export default class Role {
     this.tags = data.tags;
 
     this.guild = guild;
+
+    makeObservable(this);
   }
 
   @action

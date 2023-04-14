@@ -11,10 +11,11 @@ import {
   type APIRole,
   type APIChannel,
 } from '@puyodead1/fosscord-api-types/v9';
-import {ObservableMap, action, computed, observable} from 'mobx';
+import {ObservableMap, action, computed, makeObservable, observable} from 'mobx';
 import type Instance from './Instance';
 import Role from './Role';
 import Channel from './Channel';
+import type User from './User';
 
 export default class Guild {
   id: Snowflake;
@@ -135,22 +136,12 @@ export default class Guild {
 
   @action
   addChannel(data: APIChannel) {
-    if (!this.channels.has(data.id)) this.channels.set(data.id, new Channel(data, this));
+    if (!this.channels.has(data.id)) this.channels.set(data.id, new Channel(data, this.instance));
   }
 
   @action
   updateChannel(data: APIChannel) {
     this.channels.get(data.id)?.update(data);
-  }
-
-  @action
-  removeChannel(id: Snowflake) {
-    return this.channels.delete(id);
-  }
-
-  @computed
-  hasChannel(id: Snowflake) {
-    return this.channels.has(id);
   }
 
   @action
@@ -161,16 +152,6 @@ export default class Guild {
   @action
   updateRole(data: APIRole) {
     this.roles.get(data.id)?.update(data);
-  }
-
-  @action
-  removeRole(id: Snowflake) {
-    return this.roles.delete(id);
-  }
-
-  @computed
-  hasRole(id: Snowflake) {
-    return this.roles.has(id);
   }
 
   @action
@@ -185,20 +166,10 @@ export default class Guild {
     if (!data.user) throw 'Member does not have a valid user property';
     this.members.get(data.user.id)?.update(data);
   }
-
-  @action
-  removeMember(id: Snowflake) {
-    return this.members.delete(id);
-  }
-
-  @computed
-  hasMember(id: Snowflake) {
-    return this.members.has(id);
-  }
 }
 
 export class GuildMember {
-  @observable user?: APIUser;
+  @observable user?: User;
   @observable nick?: string | null;
   @observable avatar?: string | null;
   @observable roles: Role[];
@@ -213,7 +184,7 @@ export class GuildMember {
   readonly guild: Guild;
 
   constructor(data: APIGuildMember, guild: Guild) {
-    this.user = data.user;
+    this.user = guild.instance.users.get((data.user as APIUser).id);
     this.nick = data.nick;
     this.avatar = data.avatar;
     this.roles = data.roles.map(role => guild.roles.get(role)).filter(Boolean) as Role[];
@@ -231,6 +202,8 @@ export class GuildMember {
     //   // TODO:
     //   this.domain.presences.add(data.presence);
     // }
+
+    makeObservable(this);
   }
 
   @action
@@ -255,6 +228,8 @@ export class GuildMemberList {
 
   constructor(guild: Guild) {
     this.guild = guild;
+
+    makeObservable(this);
   }
 
   @action
