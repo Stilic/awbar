@@ -1,60 +1,81 @@
-import type {GatewayGuild, Snowflake} from '@puyodead1/fosscord-api-types/v9';
-import {observable} from 'mobx';
+import {
+  GatewayGuildMemberListUpdateOperation,
+  type APIGuildMember,
+  type APIUser,
+  type GatewayGuild,
+  type GatewayGuildMemberListUpdateDispatchData,
+  type GatewayGuildMemberListUpdateGroup,
+  type GuildMemberFlags,
+  type Snowflake,
+  type APIGuild,
+  type APIRole,
+  type APIChannel,
+} from '@puyodead1/fosscord-api-types/v9';
+import {ObservableMap, action, computed, observable} from 'mobx';
 import type Instance from './Instance';
+import Role from './Role';
+import Channel from './Channel';
 
 export default class Guild {
-  public id: Snowflake;
-  public joinedAt: string;
-  // @observable public threads: unknown[]; // TODO
-  //   @observable public stickers: unknown[]; // TODO
-  //   @observable public stageInstances: unknown[]; // TODO
-  @observable public roles: RoleStore;
-  @observable public memberCount: number;
-  @observable public lazy: boolean;
-  @observable public large: boolean;
-  //   @observable public guildScheduledEvents: unknown[]; // TODO
-  //   @observable public emojis: unknown[]; // TODO
-  @observable public channels: ChannelStore;
-  @observable public name: string;
-  @observable public description?: string;
-  @observable public icon?: string;
-  @observable public splash?: string;
-  @observable public banner?: string;
-  @observable public features: string[];
-  @observable public preferredLocale: string;
-  @observable public ownerId: Snowflake;
-  @observable public applicationId?: Snowflake;
-  @observable public afkChannelId?: Snowflake;
-  @observable public afkTimeout: number;
-  @observable public systemChannelId?: Snowflake;
-  @observable public verificationLevel: number;
-  @observable public explicitContentFilter: number;
-  @observable public defaultMessageNotifications: number;
-  @observable public mfaLevel: number;
-  @observable public vanityUrlCode?: string;
-  @observable public premiumTier: number;
-  //   @observable public premiumProgressBarEnabled: boolean; // TODO
-  @observable public systemChannelFlags: number;
-  @observable public discoverySplash?: string;
-  @observable public rulesChannelId?: Snowflake;
-  @observable public publicUpdatesChannelId?: Snowflake;
-  @observable public maxVideoChannelUsers?: number;
-  @observable public maxMembers?: number;
-  @observable public nsfwLevel: number;
-  @observable public hubType?: number;
-  @observable public acronym: string;
+  id: Snowflake;
+  joined_at: string;
+  // @observable threads: unknown[]; // TODO
+  //   @observable stickers: unknown[]; // TODO
+  //   @observable stageInstances: unknown[]; // TODO
+  @observable lazy: boolean;
+  @observable large: boolean;
+  //   @observable guildScheduledEvents: unknown[]; // TODO
+  //   @observable emojis: unknown[]; // TODO
+  @observable name: string;
+  @observable description?: string;
+  @observable icon?: string;
+  @observable splash?: string;
+  @observable banner?: string;
+  @observable features: string[];
+  @observable preferred_locale: string;
+  @observable owner_id: Snowflake;
+  @observable application_id?: Snowflake;
+  @observable afk_channel_id?: Snowflake;
+  @observable afk_timeout: number;
+  @observable system_channel_id?: Snowflake;
+  @observable verification_level: number;
+  @observable explicit_content_filter: number;
+  @observable default_message_notifications: number;
+  @observable mfa_level: number;
+  @observable vanity_url_code?: string;
+  @observable premium_tier: number;
+  //   @observable premium_progress_bar_enabled: boolean; // TODO
+  @observable system_channel_flags: number;
+  @observable discovery_splash?: string;
+  @observable rules_channel_id?: Snowflake;
+  @observable public_updates_channel_id?: Snowflake;
+  @observable max_video_channel_users?: number;
+  @observable max_members?: number;
+  @observable nsfw_level: number;
+  @observable hub_type?: number;
 
-  public readonly members: GuildMemberList;
+  @observable readonly channels: ObservableMap<Snowflake, Channel>;
+  @observable readonly members: ObservableMap<Snowflake, GuildMember>;
+  @observable readonly roles: ObservableMap<Snowflake, Role>;
 
-  public readonly instance: Instance;
+  @observable readonly memberList: GuildMemberList;
+
+  readonly instance: Instance;
+
+  @computed
+  get acronym(): string {
+    return this.name
+      .split(' ')
+      .map(word => word.substring(0, 1))
+      .join('');
+  }
 
   constructor(data: GatewayGuild, instance: Instance) {
     this.id = data.id;
-    this.joinedAt = data.joined_at;
+    this.joined_at = data.joined_at;
     // this.threads = data.threads;
     // this.stickers = data.stickers;
     // this.stageInstances = data.stage_instances;
-    this.memberCount = data.member_count;
     this.lazy = data.lazy;
     this.large = data.large;
     // this.guildScheduledEvents = data.guild_scheduled_events;
@@ -65,41 +86,308 @@ export default class Guild {
     if (data.properties.splash) this.splash = data.properties.splash;
     if (data.properties.banner) this.banner = data.properties.banner;
     this.features = data.properties.features;
-    this.preferredLocale = data.properties.preferred_locale;
-    this.ownerId = data.properties.owner_id;
-    if (data.properties.application_id) this.applicationId = data.properties.application_id;
-    if (data.properties.afk_channel_id) this.afkChannelId = data.properties.afk_channel_id;
-    this.afkTimeout = data.properties.afk_timeout;
-    if (data.properties.system_channel_id) this.systemChannelId = data.properties.system_channel_id;
-    this.verificationLevel = data.properties.verification_level;
-    this.explicitContentFilter = data.properties.explicit_content_filter;
-    this.defaultMessageNotifications = data.properties.default_message_notifications;
-    this.mfaLevel = data.properties.mfa_level;
-    if (data.properties.vanity_url_code) this.vanityUrlCode = data.properties.vanity_url_code;
-    this.premiumTier = data.properties.premium_tier;
-    this.systemChannelFlags = data.properties.system_channel_flags;
-    if (data.properties.discovery_splash) this.discoverySplash = data.properties.discovery_splash;
-    if (data.properties.rules_channel_id) this.rulesChannelId = data.properties.rules_channel_id;
+    this.preferred_locale = data.properties.preferred_locale;
+    this.owner_id = data.properties.owner_id;
+    if (data.properties.application_id) this.application_id = data.properties.application_id;
+    if (data.properties.afk_channel_id) this.afk_channel_id = data.properties.afk_channel_id;
+    this.afk_timeout = data.properties.afk_timeout;
+    if (data.properties.system_channel_id)
+      this.system_channel_id = data.properties.system_channel_id;
+    this.verification_level = data.properties.verification_level;
+    this.explicit_content_filter = data.properties.explicit_content_filter;
+    this.default_message_notifications = data.properties.default_message_notifications;
+    this.mfa_level = data.properties.mfa_level;
+    if (data.properties.vanity_url_code) this.vanity_url_code = data.properties.vanity_url_code;
+    this.premium_tier = data.properties.premium_tier;
+    this.system_channel_flags = data.properties.system_channel_flags;
+    if (data.properties.discovery_splash) this.discovery_splash = data.properties.discovery_splash;
+    if (data.properties.rules_channel_id) this.rules_channel_id = data.properties.rules_channel_id;
     if (data.properties.public_updates_channel_id)
-      this.publicUpdatesChannelId = data.properties.public_updates_channel_id;
+      this.public_updates_channel_id = data.properties.public_updates_channel_id;
     if (data.properties.max_video_channel_users)
-      this.maxVideoChannelUsers = data.properties.max_video_channel_users;
-    if (data.properties.max_members) this.maxMembers = data.properties.max_members;
-    this.nsfwLevel = data.properties.nsfw_level;
-    if (data.properties.hub_type) this.hubType = data.properties.hub_type;
+      this.max_video_channel_users = data.properties.max_video_channel_users;
+    if (data.properties.max_members) this.max_members = data.properties.max_members;
+    this.nsfw_level = data.properties.nsfw_level;
+    if (data.properties.hub_type) this.hub_type = data.properties.hub_type;
 
-    this.roles.addAll(data.roles);
-    this.channels.addAll(data.channels);
+    this.channels = new ObservableMap<Snowflake, Channel>();
+    this.members = new ObservableMap<Snowflake, GuildMember>();
+    this.roles = new ObservableMap<Snowflake, Role>();
 
-    this.acronym = this.name
-      .split(' ')
-      .map(word => word.substring(0, 1))
-      .join('');
+    data.channels.forEach(channel => this.addChannel(channel));
+    data.members.forEach(member => this.addMember(member));
+    data.roles.forEach(role => this.addRole(role));
+
+    this.memberList = new GuildMemberList(this);
 
     this.instance = instance;
   }
+
+  @action
+  update(data: APIGuild | GatewayGuild) {
+    if ('properties' in data) {
+      Object.assign(this, {...data, ...data.properties});
+      return;
+    }
+
+    Object.assign(this, data);
+  }
+
+  @action
+  addChannel(data: APIChannel) {
+    if (!this.channels.has(data.id)) this.channels.set(data.id, new Channel(data, this));
+  }
+
+  @action
+  updateChannel(data: APIChannel) {
+    this.channels.get(data.id)?.update(data);
+  }
+
+  @action
+  removeChannel(id: Snowflake) {
+    return this.channels.delete(id);
+  }
+
+  @computed
+  hasChannel(id: Snowflake) {
+    return this.channels.has(id);
+  }
+
+  @action
+  addRole(data: APIRole) {
+    if (!this.roles.has(data.id)) this.roles.set(data.id, new Role(data, this));
+  }
+
+  @action
+  updateRole(data: APIRole) {
+    this.roles.get(data.id)?.update(data);
+  }
+
+  @action
+  removeRole(id: Snowflake) {
+    return this.roles.delete(id);
+  }
+
+  @computed
+  hasRole(id: Snowflake) {
+    return this.roles.has(id);
+  }
+
+  @action
+  addMember(data: APIGuildMember) {
+    if (!data.user) throw 'Member does not have a valid user property';
+    if (!this.members.has(data.user.id))
+      this.members.set(data.user.id, new GuildMember(data, this));
+  }
+
+  @action
+  updateMember(data: APIGuildMember) {
+    if (!data.user) throw 'Member does not have a valid user property';
+    this.members.get(data.user.id)?.update(data);
+  }
+
+  @action
+  removeMember(id: Snowflake) {
+    return this.members.delete(id);
+  }
+
+  @computed
+  hasMember(id: Snowflake) {
+    return this.members.has(id);
+  }
 }
 
-export class GuildMember {}
+export class GuildMember {
+  @observable user?: APIUser;
+  @observable nick?: string | null;
+  @observable avatar?: string | null;
+  @observable roles: Role[];
+  @observable joined_at: string;
+  @observable premium_since?: string | null;
+  @observable deaf: boolean;
+  @observable mute: boolean;
+  @observable flags: GuildMemberFlags;
+  @observable pending?: boolean;
+  @observable communication_disabled_until?: string | null;
 
-export class GuildMemberList {}
+  readonly guild: Guild;
+
+  constructor(data: APIGuildMember, guild: Guild) {
+    this.user = data.user;
+    this.nick = data.nick;
+    this.avatar = data.avatar;
+    this.roles = data.roles.map(role => guild.roles.get(role)).filter(Boolean) as Role[];
+    this.joined_at = data.joined_at;
+    this.premium_since = data.premium_since;
+    this.deaf = data.deaf;
+    this.mute = data.mute;
+    this.flags = data.flags;
+    this.pending = data.pending;
+    this.communication_disabled_until = data.communication_disabled_until;
+
+    this.guild = guild;
+
+    // if ('presence' in data) {
+    //   // TODO:
+    //   this.domain.presences.add(data.presence);
+    // }
+  }
+
+  @action
+  update(member: APIGuildMember) {
+    Object.assign(this, member);
+
+    // if ('presence' in member) {
+    //   // TODO:
+    //   this.domain.presences.add(member.presence);
+    // }
+  }
+}
+
+export class GuildMemberList {
+  id?: string;
+  @observable groups?: GatewayGuildMemberListUpdateGroup[];
+  @observable onlineCount?: number;
+
+  @observable list: (string | GuildMember)[] = [];
+
+  readonly guild: Guild;
+
+  constructor(guild: Guild) {
+    this.guild = guild;
+  }
+
+  @action
+  update(data: GatewayGuildMemberListUpdateDispatchData) {
+    this.id = data.id;
+    this.groups = data.groups;
+    this.onlineCount = data.online_count;
+
+    for (const i of data.ops) {
+      switch (i.op) {
+        case GatewayGuildMemberListUpdateOperation.SYNC:
+          let listData: {
+            title: string;
+            data: {member: GuildMember; index: number}[];
+          }[] = [];
+
+          for (const item of i.items) {
+            if ('group' in item) {
+              const role = this.guild.roles.get(item.group.id);
+
+              listData.push({
+                title: `${(role?.name ?? item.group.id).toUpperCase()}`,
+                data: [],
+              });
+            } else {
+              // try to get the existing member
+              if (item.member.user?.id) {
+                const member = this.guild.members.get(item.member.user.id);
+                if (member) {
+                  listData[listData.length - 1].data.push({
+                    member,
+                    index: item.member.index,
+                  });
+                  return;
+                }
+              }
+              listData[listData.length - 1].data.push({
+                member: new GuildMember(item.member, this.guild),
+                index: item.member.index,
+              });
+            }
+          }
+
+          // remove empty groups
+          listData = listData.filter(i => i.data.length > 0);
+          // add the number of members in each group to the group name
+          listData = listData.map(i => ({
+            ...i,
+            title: `${i.title} - ${i.data.length}`,
+          }));
+
+          // hide offline group if it has more than 100 members
+          listData = listData.filter(
+            i => !(i.title.toLowerCase().startsWith('offline') && i.data.length >= 100),
+          );
+
+          // sort the list by the index
+          // this.list = listData.flatMap(i => [
+          //   i.title,
+          //   ...i.data.sort((a, b) => a.index - b.index).map(i => i.member),
+          // ]);
+
+          this.list = listData.flatMap(i => [
+            i.title,
+            ...i.data
+              .sort((a, b) => {
+                const ua = a.member.user?.username;
+                const ub = b.member.user?.username;
+                if (ua && ub) {
+                  return ua.toLowerCase() > ub.toLowerCase() ? 1 : -1;
+                }
+
+                return 0;
+              })
+              .map(i => i.member),
+          ]);
+
+          break;
+        // case GatewayGuildMemberListUpdateOperation.DELETE:
+        //   for (const item of items) {
+        //     if ("group" in item) {
+        //       this.logger.debug(
+        //         `Delete group ${item.group.id} from ${this.id}`,
+        //         i
+        //       );
+        //       //   this.listData.splice(range[0], 1);
+        //     } else {
+        //       //   this.listData[range[0]].data.splice(range[1], 1);
+        //       this.logger.debug(
+        //         `Delete member ${item.member.user.username} from ${this.id}`,
+        //         i
+        //       );
+        //     }
+        //   }
+        // break;
+        // case GatewayGuildMemberListUpdateOperation.UPDATE:
+        //   for (const item of items) {
+        //     if ("group" in item) {
+        //       //   this.listData[range[0]].title = item.group.id;
+        //       this.logger.debug(
+        //         `Update group ${item.group.id} from ${this.id}`,
+        //         i
+        //       );
+        //     } else {
+        //       //   this.listData[range[0]].data[range[1]] = item.member;
+        //       this.logger.debug(
+        //         `Update member ${item.member.user.username} from ${this.id}`,
+        //         i
+        //       );
+        //     }
+        //   }
+        // break;
+        // case GatewayGuildMemberListUpdateOperation.INSERT:
+        // if ('group' in item) {
+        //   this.list.splice(index, 0, item.group.id);
+        // } else {
+        //   // try to get the existing member
+        //   if (item.member.user?.id) {
+        //     const member = this.guild.members.get(item.member.user.id);
+        //     if (member) {
+        //       this.list[index].data.push(member);
+        //       return;
+        //     }
+        //   }
+
+        //   this.list[index].data.splice(
+        //     index,
+        //     0,
+        //     new GuildMember(this.domain, this.guild, item.member),
+        //   );
+        // }
+        // break;
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import {Globals} from '../../Globals';
   import {createForm} from 'svelte-forms-lib';
+  import Globals from '../../Globals';
 
   const {form, handleChange, handleSubmit} = createForm({
     initialValues: {
@@ -14,7 +14,7 @@
           password: values.password,
           undelete: false,
         })
-        .then(token => {
+        .then((token: string) => {
           console.log(token);
         });
     },

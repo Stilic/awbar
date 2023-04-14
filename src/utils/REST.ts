@@ -10,7 +10,7 @@ import type Instance from '../objects/Instance';
 export default class REST {
   // private static tokenStore: Writable<TokenStore> = persisted<TokenStore>('tokens', {});
 
-  public instance: Instance;
+  instance: Instance;
 
   constructor(instance: Instance) {
     this.instance = instance;
@@ -27,7 +27,7 @@ export default class REST {
   }
 
   /*
-	public setToken(token: string) {
+	setToken(token: string) {
 		this.token = token;
 
 		const tokens: TokenStore = get(REST.tokenStore);
@@ -40,11 +40,7 @@ export default class REST {
     return new URL(`/api/${path}`, `https://${this.instance.domain}`).href;
   }
 
-  public async get<T>(
-    path: string,
-    queryParams: Record<string, unknown> = {},
-    token?: string,
-  ): Promise<T> {
+  async get<T>(path: string, queryParams: Record<string, any> = {}, token?: string): Promise<T> {
     const headers = new AxiosHeaders();
     if (token) headers.setAuthorization(token);
     return new Promise((resolve, reject) => {
@@ -58,10 +54,10 @@ export default class REST {
     });
   }
 
-  public async post<T, U>(
+  async post<T, U>(
     path: string,
     data?: T,
-    queryParams: Record<string, unknown> = {},
+    queryParams: Record<string, any> = {},
     token?: string,
   ): Promise<U> {
     const headers = new AxiosHeaders();

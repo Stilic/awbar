@@ -32,7 +32,7 @@ import User from './User';
 
 // based off https://github.com/spacebarchat/client/blob/742255bbbe955705098b83b87b6067ad7de3b827/src/stores/GatewayConnectionStore.ts
 export default class GatewayConnection {
-  public readonly instance: Instance;
+  readonly instance: Instance;
 
   private readonly token: string;
   private socket?: WebSocket;
@@ -44,7 +44,7 @@ export default class GatewayConnection {
 
   private user?: User;
 
-  get isOpen(): boolean {
+  get isOpen() {
     if (this.socket) return this.socket.readyState == WebSocket.OPEN;
     else return false;
   }
@@ -54,7 +54,7 @@ export default class GatewayConnection {
     this.token = token;
   }
 
-  public connect() {
+  connect() {
     const socketUrl = new URL(`ws://${this.instance.domain}`);
     socketUrl.searchParams.append('v', '9');
     socketUrl.searchParams.append('encoding', 'json');

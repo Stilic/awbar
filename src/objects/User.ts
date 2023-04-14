@@ -8,32 +8,37 @@ import {computed, observable} from 'mobx';
 import type Instance from './Instance';
 
 export default class User {
-  public id: Snowflake;
-  @observable public username: string;
-  @observable public discriminator: string;
-  @observable public avatar?: string;
-  @observable public bot: boolean = false;
-  @observable public bio?: string;
-  @observable public pronouns?: string;
-  @observable public system: boolean = false;
-  @observable public mfaEnabled: boolean = false;
-  @observable public banner?: string;
-  @observable public accentColor?: number;
-  @observable public themeColor?: number;
-  @observable public locale?: string;
-  @observable public verified: boolean = false;
-  @observable public email?: string;
-  @observable public flags?: UserFlags;
-  @observable public premiumType?: UserPremiumType;
-  public readonly premiumSince?: string;
-  @observable public publicFlags?: UserFlags;
+  id: Snowflake;
+  @observable username: string;
+  @observable discriminator: string;
+  @observable avatar?: string;
+  @observable bot: boolean = false;
+  @observable bio?: string;
+  @observable pronouns?: string;
+  @observable system: boolean = false;
+  @observable mfa_enabled: boolean = false;
+  @observable banner?: string;
+  @observable accent_color?: number;
+  @observable theme_color?: number;
+  @observable locale?: string;
+  @observable verified: boolean = false;
+  @observable email?: string;
+  @observable flags?: UserFlags;
+  @observable premium_type?: UserPremiumType;
+  readonly premium_since?: string;
+  @observable public_flags?: UserFlags;
 
   @computed
-  public get tag(): string {
+  get tag(): string {
     return `${this.username}#${this.discriminator}`;
   }
 
-  public readonly instance: Instance;
+  @computed
+  get instanceTag(): string {
+    return `${this.tag}@${this.instance.domain}`;
+  }
+
+  readonly instance: Instance;
 
   constructor(data: APIUser, instance: Instance) {
     this.id = data.id;
@@ -43,17 +48,17 @@ export default class User {
     if (data.bot) this.bot = data.bot;
     this.bio = data.bio;
     if (data.system) this.system = data.system;
-    if (data.mfa_enabled) this.mfaEnabled = data.mfa_enabled;
+    if (data.mfa_enabled) this.mfa_enabled = data.mfa_enabled;
     if (data.banner) this.banner = data.banner;
-    if (data.accent_color) this.accentColor = data.accent_color;
-    this.themeColor = data.theme_colors;
+    if (data.accent_color) this.accent_color = data.accent_color;
+    this.theme_color = data.theme_colors;
     this.locale = data.locale;
     if (data.verified) this.verified = data.verified;
     if (data.email) this.email = data.email;
     this.flags = data.flags;
-    this.premiumType = data.premium_type;
-    this.premiumSince = data.premium_since;
-    this.publicFlags = data.public_flags;
+    this.premium_type = data.premium_type;
+    this.premium_since = data.premium_since;
+    this.public_flags = data.public_flags;
 
     this.instance = instance;
   }
