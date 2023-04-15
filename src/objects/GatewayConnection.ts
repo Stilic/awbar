@@ -32,16 +32,16 @@ import User from './User';
 
 // based off https://github.com/spacebarchat/client/blob/742255bbbe955705098b83b87b6067ad7de3b827/src/stores/GatewayConnectionStore.ts
 export default class GatewayConnection {
-  readonly instance: Instance;
-
   private readonly token: string;
   private socket?: WebSocket;
   private url?: string;
-  private dispatchHandlers: Map<GatewayDispatchEvents, (data: unknown) => void> = new Map();
-
+  private dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void> = new Map();
+  private lazyRequestChannels = new Map<string, Snowflake[]>();
   private sequence: number = 0;
   private sessionId?: string;
+  private ready: boolean = false;
 
+  readonly instance: Instance;
   private user?: User;
 
   get isOpen() {
@@ -52,6 +52,10 @@ export default class GatewayConnection {
   constructor(instance: Instance, token: string) {
     this.instance = instance;
     this.token = token;
+  }
+
+  isReady() {
+    return this.ready;
   }
 
   connect() {
@@ -162,19 +166,56 @@ export default class GatewayConnection {
     this.user = new User(data.user, this.instance);
 
     // TODO: store guilds
-    // for (const guild of data.guilds) this.instance.guilds.addAll(data.guilds);
+    for (const guild of data.guilds) this.instance.addGuild(guild);
     // TODO: store users
-    if (data.users) {
-      for (const user of data.users) this.instance.addUser(user);
-    }
+    if (data.users) for (const user of data.users) this.instance.addUser(user);
     // TODO: store relationships
     // TODO: store readstates
-    // this.domain.privateChannels.addAll(data.private_channels);
+    for (const channel of data.private_channels) this.instance.addPrivateChannel(channel);
+
+    this.ready = true;
+  }
+
+  onChannelOpen(guildId: Snowflake, channelId: Snowflake) {
+    let payload: GatewayLazyRequestData;
+
+    const guildChannels = this.lazyRequestChannels.get(guildId);
+
+    if (!guildChannels) {
+      payload = {
+        guild_id: guildId,
+        activities: true,
+        threads: true,
+        typing: true,
+        channels: {
+          [channelId]: [[0, 99]],
+        },
+      };
+      this.lazyRequestChannels.set(guildId, [channelId]);
+    } else {
+      if (guildChannels.includes(channelId)) {
+        return;
+      }
+
+      const d: Record<string, [number, number][]> = {};
+      guildChannels.forEach(x => (d[x] = [[0, 99]]));
+      payload = {
+        guild_id: guildId,
+        channels: d,
+      };
+      guildChannels.push(channelId);
+    }
+
+    this.sendJson({
+      op: GatewayOpcodes.LazyRequest,
+      d: payload,
+    } as GatewayLazyRequest);
   }
 
   private cleanup() {
     // this.stopHeartbeater();
     this.socket = undefined;
+    this.ready = false;
   }
 
   private reset() {

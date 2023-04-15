@@ -1,14 +1,17 @@
-import {ObservableMap, action, computed, makeObservable, observable} from 'mobx';
+import {ObservableMap, action, makeObservable, observable, type IObservableArray} from 'mobx';
 import type {IAPILoginRequest, IAPILoginResponse} from '../interfaces/api';
 import REST from '../utils/REST';
 import User from './User';
 import type {APIChannel, APIUser, GatewayGuild, Snowflake} from '@puyodead1/fosscord-api-types/v9';
 import Guild from './Guild';
 import Channel from './Channel';
+import GatewayConnection from './GatewayConnection';
 
 export default class Instance {
   readonly domain: string;
   readonly rest: REST;
+
+  @observable readonly connections: IObservableArray<GatewayConnection> = observable.array();
 
   @observable readonly users: ObservableMap<string, User>;
   @observable readonly guilds: ObservableMap<string, Guild>;
@@ -56,13 +59,16 @@ export default class Instance {
     this.privateChannels.get(data.id)?.update(data);
   }
 
-  getToken(credentials: IAPILoginRequest): Promise<string> {
+  createConnection(credentials: IAPILoginRequest): Promise<GatewayConnection> {
     return new Promise((resolve, reject) => {
       return this.rest
         .post<IAPILoginRequest, IAPILoginResponse>('auth/login', credentials)
         .then(r => {
-          if ('token' in r && 'settings' in r) return resolve(r.token);
-          else {
+          if ('token' in r && 'settings' in r) {
+            const connection = new GatewayConnection(this, r.token);
+            this.connections.push(connection);
+            return resolve(connection);
+          } else {
             console.error('error on login');
             reject();
           }

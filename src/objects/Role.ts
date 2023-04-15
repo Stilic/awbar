@@ -1,6 +1,12 @@
-import type {APIRole, APIRoleTags} from '@puyodead1/fosscord-api-types/v9';
 import type Guild from './Guild';
 import {action, computed, makeObservable, observable} from 'mobx';
+import type {Role as APIRole} from '@stilic_dev/spacebar-types';
+
+export type RoleTags = {
+  bot_id?: string;
+  integration_id?: string;
+  premium_subscriber?: boolean;
+};
 
 export default class Role {
   id: string;
@@ -13,7 +19,7 @@ export default class Role {
   @observable permissions: string;
   managed: boolean;
   @observable mentionable: boolean;
-  @observable tags?: APIRoleTags;
+  @observable tags?: RoleTags;
 
   readonly guild: Guild;
 
