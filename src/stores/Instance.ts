@@ -17,7 +17,7 @@ export default class Instance {
   readonly domain: string;
   readonly rest: REST;
 
-  @observable readonly connections: IObservableArray<GatewayConnection> = observable.array();
+  @observable readonly connections: IObservableArray<GatewayConnection>;
 
   @observable readonly users: ObservableMap<string, User>;
   @observable readonly guilds: ObservableMap<string, Guild>;
@@ -28,6 +28,8 @@ export default class Instance {
   constructor(domain: string) {
     this.domain = domain;
     this.rest = new REST(this);
+
+    this.connections = observable.array();
 
     this.users = new ObservableMap<Snowflake, User>();
     this.guilds = new ObservableMap<Snowflake, Guild>();

@@ -3,7 +3,6 @@ import {
   GatewayOpcodes,
   PresenceUpdateStatus,
   GatewayDispatchEvents,
-  type Snowflake,
   type APIMessage,
   type GatewayChannelCreateDispatchData,
   type GatewayChannelDeleteDispatchData,
@@ -31,7 +30,6 @@ import {runInAction} from 'mobx';
 export default class GatewayConnection {
   private readonly token: string;
   private socket?: WebSocket;
-  private url?: string;
   private dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void> = new Map();
   private heartbeatInterval?: number;
   private heartbeater?: number;
@@ -49,27 +47,27 @@ export default class GatewayConnection {
     else return false;
   }
 
-  constructor(instance: Instance, token: string) {
-    this.instance = instance;
-    this.token = token;
-  }
-
   isReady() {
     return this.ready;
   }
 
+  constructor(instance: Instance, token: string) {
+    this.instance = instance;
+    this.token = token;
+    this.connect();
+  }
+
   connect() {
-    const socketUrl = new URL(`ws://${this.instance.domain}`);
+    const socketUrl = new URL(`wss://${this.instance.domain}`);
     socketUrl.searchParams.append('v', '9');
     socketUrl.searchParams.append('encoding', 'json');
-    this.url = socketUrl.href;
-    this.socket = new WebSocket(this.url);
+    this.socket = new WebSocket(socketUrl.href);
 
-    this.socket.onopen = this.onSocketOpen;
-    this.socket.onmessage = this.onSocketMessage;
+    this.socket!.onopen = this.onSocketOpen;
+    this.socket!.onmessage = this.onSocketMessage;
     // TODO: implement logs and error handler
-    this.socket.onerror = console.error;
-    this.socket.onclose = this.onSocketClose;
+    this.socket!.onerror = console.error;
+    this.socket!.onclose = this.onSocketClose;
 
     this.dispatchHandlers.set(GatewayDispatchEvents.Ready, this.onReady);
     // this.dispatchHandlers.set(GatewayDispatchEvents.Resumed, this.onResumed);
@@ -91,7 +89,12 @@ export default class GatewayConnection {
     // this.dispatchHandlers.set(GatewayDispatchEvents.PresenceUpdate, this.onPresenceUpdate);
   }
 
-  private onSocketOpen() {
+  disconnect() {
+    this.cleanup();
+    this.instance.connections.remove(this);
+  }
+
+  private onSocketOpen = () => {
     const info = UAParser();
     const payload: GatewayIdentify = {
       op: GatewayOpcodes.Identify,
@@ -112,18 +115,18 @@ export default class GatewayConnection {
       },
     };
     this.sendJson(payload);
-  }
+  };
 
-  private onSocketClose(e: CloseEvent) {
+  private onSocketClose = (e: CloseEvent) => {
     this.cleanup();
 
     if (e.code === 4004) {
       // this.domain.logout();
       this.reset();
     }
-  }
+  };
 
-  private onSocketMessage(e: MessageEvent<GatewayReceivePayload>) {
+  private onSocketMessage = (e: MessageEvent<GatewayReceivePayload>) => {
     switch (e.data.op) {
       case GatewayOpcodes.Dispatch:
         this.handleDispatch(e.data);
@@ -144,9 +147,9 @@ export default class GatewayConnection {
         this.heartbeatAck = true;
         break;
     }
-  }
+  };
 
-  private startHeartbeater() {
+  private startHeartbeater = () => {
     if (this.heartbeater) {
       clearInterval(this.heartbeater);
       this.heartbeater = undefined;
@@ -166,9 +169,9 @@ export default class GatewayConnection {
       this.heartbeater = setInterval(heartbeaterFn, this.heartbeatInterval!);
       heartbeaterFn();
     }, Math.floor(Math.random() * this.heartbeatInterval!));
-  }
+  };
 
-  private stopHeartbeater() {
+  private stopHeartbeater = () => {
     if (this.heartbeater) {
       clearInterval(this.heartbeater);
       this.heartbeater = undefined;
@@ -178,13 +181,13 @@ export default class GatewayConnection {
       clearTimeout(this.initialHeartbeatTimeout);
       this.initialHeartbeatTimeout = undefined;
     }
-  }
+  };
 
-  private handleDispatch(data: GatewayDispatchPayload) {
+  private handleDispatch = (data: GatewayDispatchPayload) => {
     this.sequence = data.s;
     const handler = this.dispatchHandlers.get(data.t);
     if (handler) handler(data.d);
-  }
+  };
 
   private sendJson(payload: GatewaySendPayload) {
     if (this.socket) {
@@ -193,26 +196,26 @@ export default class GatewayConnection {
     }
   }
 
-  private handleInvalidSession(resumable: boolean) {
+  private handleInvalidSession = (resumable: boolean) => {
     this.cleanup();
     // TODO: handle resumable
-  }
+  };
 
-  private handleHello(data: GatewayHelloData) {
+  private handleHello = (data: GatewayHelloData) => {
     this.heartbeatInterval = data.heartbeat_interval;
     this.startHeartbeater();
-  }
+  };
 
-  private handleHeartbeatTimeout() {
+  private handleHeartbeatTimeout = () => {
     this.socket?.close(4009);
 
     // TODO: reconnect
     this.cleanup();
     this.reset();
-  }
+  };
 
   // dispatch handlers
-  private onReady(data: GatewayReadyDispatchData) {
+  private onReady = (data: GatewayReadyDispatchData) => {
     this.sessionId = data.session_id;
 
     this.user = new User(data.user, this.instance);
@@ -226,37 +229,37 @@ export default class GatewayConnection {
     for (const channel of data.private_channels) this.instance.addPrivateChannel(channel);
 
     this.ready = true;
-  }
+  };
 
-  private onGuildCreate(data: GatewayGuildCreateDispatchData) {
+  private onGuildCreate = (data: GatewayGuildCreateDispatchData) => {
     runInAction(() => {
       this.instance.addGuild({
         ...data,
         ...data.properties,
       } as unknown as GatewayGuild);
     });
-  }
+  };
 
-  private onGuildUpdate(data: GatewayGuildModifyDispatchData) {
+  private onGuildUpdate = (data: GatewayGuildModifyDispatchData) => {
     this.instance.guilds.get(data.id)?.update(data);
-  }
+  };
 
-  private onGuildDelete(data: GatewayGuildDeleteDispatchData) {
+  private onGuildDelete = (data: GatewayGuildDeleteDispatchData) => {
     runInAction(() => {
       this.instance.guilds.delete(data.id);
     });
-  }
+  };
 
-  private onGuildMemberListUpdate(data: GatewayGuildMemberListUpdateDispatchData) {
+  private onGuildMemberListUpdate = (data: GatewayGuildMemberListUpdateDispatchData) => {
     const {guild_id} = data;
     const guild = this.instance.guilds.get(guild_id);
 
     if (!guild) return;
 
     guild.memberList.update(data);
-  }
+  };
 
-  private onChannelCreate(data: GatewayChannelCreateDispatchData) {
+  private onChannelCreate = (data: GatewayChannelCreateDispatchData) => {
     if (data.type === ChannelType.DM || data.type === ChannelType.GroupDM) {
       this.instance.addPrivateChannel(data);
       return;
@@ -268,9 +271,9 @@ export default class GatewayConnection {
       return;
     }
     guild.addChannel(data);
-  }
+  };
 
-  private onChannelDelete(data: GatewayChannelDeleteDispatchData) {
+  private onChannelDelete = (data: GatewayChannelDeleteDispatchData) => {
     if (data.type === ChannelType.DM || data.type === ChannelType.GroupDM) {
       this.instance.privateChannels.delete(data.id);
       return;
@@ -282,9 +285,9 @@ export default class GatewayConnection {
       return;
     }
     guild.channels.delete(data.id);
-  }
+  };
 
-  private onMessageCreate(data: GatewayMessageCreateDispatchData) {
+  private onMessageCreate = (data: GatewayMessageCreateDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
       console.warn(`[MessageCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
@@ -298,9 +301,9 @@ export default class GatewayConnection {
 
     channel.remove(data.id);
     this.instance.queue.handleIncomingMessage(data);
-  }
+  };
 
-  private onMessageUpdate(data: GatewayMessageUpdateDispatchData) {
+  private onMessageUpdate = (data: GatewayMessageUpdateDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
       console.warn(`[MessageUpdate] Guild ${data.guild_id} not found for channel ${data.id}`);
@@ -313,9 +316,9 @@ export default class GatewayConnection {
     }
 
     channel.updateMessage(data as APIMessage);
-  }
+  };
 
-  private onMessageDelete(data: GatewayMessageDeleteDispatchData) {
+  private onMessageDelete = (data: GatewayMessageDeleteDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
       console.warn(`[MessageDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
@@ -328,27 +331,28 @@ export default class GatewayConnection {
     }
 
     channel.remove(data.id);
-  }
+  };
 
   // private onPresenceUpdate(data: GatewayPresenceUpdateDispatchData) {
   //   this.instance.addPresence(data);
   // }
 
-  private sendHeartbeat() {
+  private sendHeartbeat = () => {
     this.sendJson({
       op: GatewayOpcodes.Heartbeat,
       d: this.sequence,
     });
-  }
+  };
 
-  private cleanup() {
-    // this.stopHeartbeater();
+  private cleanup = () => {
+    this.stopHeartbeater();
+    this.socket?.close();
     this.socket = undefined;
     this.ready = false;
-  }
+  };
 
-  private reset() {
+  private reset = () => {
     this.sessionId = undefined;
     this.sequence = 0;
-  }
+  };
 }

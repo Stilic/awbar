@@ -1,7 +1,7 @@
 <script lang="ts">
   import {createForm} from 'svelte-forms-lib';
-  import Globals from '../../Globals';
   import type GatewayConnection from '../../stores/GatewayConnection';
+  import App from '../../App';
 
   const {form, handleChange, handleSubmit} = createForm({
     initialValues: {
@@ -9,8 +9,8 @@
       password: '',
     },
     onSubmit: values => {
-      Globals.instance
-        .createConnection({
+      App.getCurrentInstance()
+        ?.createConnection({
           login: values.email,
           password: values.password,
           undelete: false,
