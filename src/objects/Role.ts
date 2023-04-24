@@ -1,6 +1,6 @@
 import type Guild from './Guild';
 import {action, computed, makeObservable, observable} from 'mobx';
-import type {Role as APIRole} from '@stilic_dev/spacebar-types';
+import type {APIRole, APIRoleTags} from '@spacebarchat/spacebar-api-types/v9';
 
 export type RoleTags = {
   bot_id?: string;
@@ -19,7 +19,7 @@ export default class Role {
   @observable permissions: string;
   managed: boolean;
   @observable mentionable: boolean;
-  @observable tags?: RoleTags;
+  @observable tags?: APIRoleTags;
 
   readonly guild: Guild;
 

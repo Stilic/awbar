@@ -1,34 +1,31 @@
 import {
   ChannelType,
-  GatewayChannelCreateDispatchData,
-  GatewayChannelDeleteDispatchData,
-  GatewayCloseCodes,
-  GatewayDispatchEvents,
-  GatewayDispatchPayload,
-  GatewayGuild,
-  GatewayGuildCreateDispatchData,
-  GatewayGuildDeleteDispatchData,
-  GatewayGuildMemberListUpdateDispatchData,
-  GatewayGuildModifyDispatchData,
-  GatewayHeartbeat,
-  GatewayHelloData,
-  GatewayIdentify,
-  GatewayLazyRequest,
-  GatewayLazyRequestData,
-  GatewayMessageCreateDispatchData,
-  GatewayMessageDeleteDispatchData,
-  GatewayMessageUpdateDispatchData,
   GatewayOpcodes,
-  GatewayPresenceUpdateDispatchData,
-  GatewayReadyDispatchData,
-  GatewayReceivePayload,
-  GatewaySendPayload,
   PresenceUpdateStatus,
-  Snowflake,
-} from '@puyodead1/fosscord-api-types/v9';
+  GatewayDispatchEvents,
+  type Snowflake,
+  type APIMessage,
+  type GatewayChannelCreateDispatchData,
+  type GatewayChannelDeleteDispatchData,
+  type GatewayDispatchPayload,
+  type GatewayGuild,
+  type GatewayGuildCreateDispatchData,
+  type GatewayGuildDeleteDispatchData,
+  type GatewayGuildMemberListUpdateDispatchData,
+  type GatewayGuildModifyDispatchData,
+  type GatewayHelloData,
+  type GatewayIdentify,
+  type GatewayMessageCreateDispatchData,
+  type GatewayMessageDeleteDispatchData,
+  type GatewayMessageUpdateDispatchData,
+  type GatewayReadyDispatchData,
+  type GatewayReceivePayload,
+  type GatewaySendPayload,
+} from '@spacebarchat/spacebar-api-types/v9';
 import type Instance from './Instance';
 import UAParser from 'ua-parser-js';
 import User from './User';
+import {runInAction} from 'mobx';
 
 // based off https://github.com/spacebarchat/client/blob/742255bbbe955705098b83b87b6067ad7de3b827/src/stores/GatewayConnectionStore.ts
 export default class GatewayConnection {
@@ -36,8 +33,11 @@ export default class GatewayConnection {
   private socket?: WebSocket;
   private url?: string;
   private dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void> = new Map();
-  private lazyRequestChannels = new Map<string, Snowflake[]>();
+  private heartbeatInterval?: number;
+  private heartbeater?: number;
+  private initialHeartbeatTimeout?: number;
   private sequence: number = 0;
+  private heartbeatAck: boolean = true;
   private sessionId?: string;
   private ready: boolean = false;
 
@@ -72,7 +72,7 @@ export default class GatewayConnection {
     this.socket.onclose = this.onSocketClose;
 
     this.dispatchHandlers.set(GatewayDispatchEvents.Ready, this.onReady);
-    this.dispatchHandlers.set(GatewayDispatchEvents.Resumed, this.onResumed);
+    // this.dispatchHandlers.set(GatewayDispatchEvents.Resumed, this.onResumed);
     this.dispatchHandlers.set(GatewayDispatchEvents.GuildCreate, this.onGuildCreate);
     this.dispatchHandlers.set(GatewayDispatchEvents.GuildUpdate, this.onGuildUpdate);
     this.dispatchHandlers.set(GatewayDispatchEvents.GuildDelete, this.onGuildDelete);
@@ -88,7 +88,7 @@ export default class GatewayConnection {
     this.dispatchHandlers.set(GatewayDispatchEvents.MessageUpdate, this.onMessageUpdate);
     this.dispatchHandlers.set(GatewayDispatchEvents.MessageDelete, this.onMessageDelete);
 
-    this.dispatchHandlers.set(GatewayDispatchEvents.PresenceUpdate, this.onPresenceUpdate);
+    // this.dispatchHandlers.set(GatewayDispatchEvents.PresenceUpdate, this.onPresenceUpdate);
   }
 
   private onSocketOpen() {
@@ -132,7 +132,7 @@ export default class GatewayConnection {
         this.sendHeartbeat();
         break;
       case GatewayOpcodes.Reconnect:
-        this.handleReconnect();
+        this.cleanup();
         break;
       case GatewayOpcodes.InvalidSession:
         this.handleInvalidSession(e.data.d);
@@ -141,8 +141,42 @@ export default class GatewayConnection {
         this.handleHello(e.data.d);
         break;
       case GatewayOpcodes.HeartbeatAck:
-        this.handleHeartbeatAck();
+        this.heartbeatAck = true;
         break;
+    }
+  }
+
+  private startHeartbeater() {
+    if (this.heartbeater) {
+      clearInterval(this.heartbeater);
+      this.heartbeater = undefined;
+    }
+
+    const heartbeaterFn = () => {
+      if (this.heartbeatAck) {
+        this.heartbeatAck = false;
+        this.sendHeartbeat();
+      } else {
+        this.handleHeartbeatTimeout();
+      }
+    };
+
+    this.initialHeartbeatTimeout = setTimeout(() => {
+      this.initialHeartbeatTimeout = undefined;
+      this.heartbeater = setInterval(heartbeaterFn, this.heartbeatInterval!);
+      heartbeaterFn();
+    }, Math.floor(Math.random() * this.heartbeatInterval!));
+  }
+
+  private stopHeartbeater() {
+    if (this.heartbeater) {
+      clearInterval(this.heartbeater);
+      this.heartbeater = undefined;
+    }
+
+    if (this.initialHeartbeatTimeout) {
+      clearTimeout(this.initialHeartbeatTimeout);
+      this.initialHeartbeatTimeout = undefined;
     }
   }
 
@@ -157,6 +191,24 @@ export default class GatewayConnection {
       if (this.socket.readyState !== WebSocket.OPEN) return;
       this.socket.send(JSON.stringify(payload));
     }
+  }
+
+  private handleInvalidSession(resumable: boolean) {
+    this.cleanup();
+    // TODO: handle resumable
+  }
+
+  private handleHello(data: GatewayHelloData) {
+    this.heartbeatInterval = data.heartbeat_interval;
+    this.startHeartbeater();
+  }
+
+  private handleHeartbeatTimeout() {
+    this.socket?.close(4009);
+
+    // TODO: reconnect
+    this.cleanup();
+    this.reset();
   }
 
   // dispatch handlers
@@ -176,40 +228,117 @@ export default class GatewayConnection {
     this.ready = true;
   }
 
-  onChannelOpen(guildId: Snowflake, channelId: Snowflake) {
-    let payload: GatewayLazyRequestData;
+  private onGuildCreate(data: GatewayGuildCreateDispatchData) {
+    runInAction(() => {
+      this.instance.addGuild({
+        ...data,
+        ...data.properties,
+      } as unknown as GatewayGuild);
+    });
+  }
 
-    const guildChannels = this.lazyRequestChannels.get(guildId);
+  private onGuildUpdate(data: GatewayGuildModifyDispatchData) {
+    this.instance.guilds.get(data.id)?.update(data);
+  }
 
-    if (!guildChannels) {
-      payload = {
-        guild_id: guildId,
-        activities: true,
-        threads: true,
-        typing: true,
-        channels: {
-          [channelId]: [[0, 99]],
-        },
-      };
-      this.lazyRequestChannels.set(guildId, [channelId]);
-    } else {
-      if (guildChannels.includes(channelId)) {
-        return;
-      }
+  private onGuildDelete(data: GatewayGuildDeleteDispatchData) {
+    runInAction(() => {
+      this.instance.guilds.delete(data.id);
+    });
+  }
 
-      const d: Record<string, [number, number][]> = {};
-      guildChannels.forEach(x => (d[x] = [[0, 99]]));
-      payload = {
-        guild_id: guildId,
-        channels: d,
-      };
-      guildChannels.push(channelId);
+  private onGuildMemberListUpdate(data: GatewayGuildMemberListUpdateDispatchData) {
+    const {guild_id} = data;
+    const guild = this.instance.guilds.get(guild_id);
+
+    if (!guild) return;
+
+    guild.memberList.update(data);
+  }
+
+  private onChannelCreate(data: GatewayChannelCreateDispatchData) {
+    if (data.type === ChannelType.DM || data.type === ChannelType.GroupDM) {
+      this.instance.addPrivateChannel(data);
+      return;
     }
 
+    const guild = this.instance.guilds.get(data.guild_id!);
+    if (!guild) {
+      console.warn(`[ChannelCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      return;
+    }
+    guild.addChannel(data);
+  }
+
+  private onChannelDelete(data: GatewayChannelDeleteDispatchData) {
+    if (data.type === ChannelType.DM || data.type === ChannelType.GroupDM) {
+      this.instance.privateChannels.delete(data.id);
+      return;
+    }
+
+    const guild = this.instance.guilds.get(data.guild_id!);
+    if (!guild) {
+      console.warn(`[ChannelDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
+      return;
+    }
+    guild.channels.delete(data.id);
+  }
+
+  private onMessageCreate(data: GatewayMessageCreateDispatchData) {
+    const guild = this.instance.guilds.get(data.guild_id!);
+    if (!guild) {
+      console.warn(`[MessageCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      return;
+    }
+    const channel = guild.channels.get(data.channel_id);
+    if (!channel) {
+      console.warn(`[MessageCreate] Channel ${data.channel_id} not found for message ${data.id}`);
+      return;
+    }
+
+    channel.remove(data.id);
+    this.instance.queue.handleIncomingMessage(data);
+  }
+
+  private onMessageUpdate(data: GatewayMessageUpdateDispatchData) {
+    const guild = this.instance.guilds.get(data.guild_id!);
+    if (!guild) {
+      console.warn(`[MessageUpdate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      return;
+    }
+    const channel = guild.channels.get(data.channel_id);
+    if (!channel) {
+      console.warn(`[MessageUpdate] Channel ${data.channel_id} not found for message ${data.id}`);
+      return;
+    }
+
+    channel.updateMessage(data as APIMessage);
+  }
+
+  private onMessageDelete(data: GatewayMessageDeleteDispatchData) {
+    const guild = this.instance.guilds.get(data.guild_id!);
+    if (!guild) {
+      console.warn(`[MessageDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
+      return;
+    }
+    const channel = guild.channels.get(data.channel_id);
+    if (!channel) {
+      console.warn(`[MessageDelete] Channel ${data.channel_id} not found for message ${data.id}`);
+      return;
+    }
+
+    channel.remove(data.id);
+  }
+
+  // private onPresenceUpdate(data: GatewayPresenceUpdateDispatchData) {
+  //   this.instance.addPresence(data);
+  // }
+
+  private sendHeartbeat() {
     this.sendJson({
-      op: GatewayOpcodes.LazyRequest,
-      d: payload,
-    } as GatewayLazyRequest);
+      op: GatewayOpcodes.Heartbeat,
+      d: this.sequence,
+    });
   }
 
   private cleanup() {

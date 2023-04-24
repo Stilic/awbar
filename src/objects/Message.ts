@@ -1,5 +1,5 @@
-import type {Snowflake} from '@puyodead1/fosscord-api-types/globals';
 import type {
+  Snowflake,
   APIUser,
   APIRole,
   APIChannelMention,
@@ -18,9 +18,8 @@ import type {
   APIStickerItem,
   APISticker,
   APIMessage,
-} from '@puyodead1/fosscord-api-types/v9';
+} from '@spacebarchat/spacebar-api-types/v9';
 import {action, computed, makeObservable, observable} from 'mobx';
-import type User from './User';
 import type Channel from './Channel';
 
 export default class Message {

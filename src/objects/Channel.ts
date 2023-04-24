@@ -1,18 +1,23 @@
 import {
-  type ChannelPermissionOverwriteType,
-  type Invite as APIInvite,
-  type VoiceState,
-  type ReadState,
-  type Webhook as APIWebhook,
-  type Channel as APIChannel,
-  type Recipient,
-  type ChannelPermissionOverwrite,
-  ChannelType
-} from '@stilic_dev/spacebar-types';
+  type APIChannel,
+  type APIInvite,
+  type APIOverwrite,
+  type APIReadState,
+  type APIUser,
+  type APIWebhook,
+  type GatewayVoiceState,
+  type RESTGetAPIChannelMessagesQuery,
+  type RESTGetAPIChannelMessagesResult,
+  type RESTPostAPIChannelMessageJSONBody,
+  type RESTPostAPIChannelMessageResult,
+  type Snowflake,
+  ChannelType,
+  Routes,
+  type APIMessage,
+} from '@spacebarchat/spacebar-api-types/v9';
 import {action, makeObservable, observable, type IObservableArray, computed} from 'mobx';
 import Message from './Message';
 import type Instance from './Instance';
-import type { Snowflake } from '../utils/Snowflake';
 
 export default class Channel {
   id: Snowflake;
@@ -20,7 +25,7 @@ export default class Channel {
   @observable name?: string;
   @observable icon?: string;
   type: number;
-  @observable recipients?: Recipient[];
+  @observable recipients?: APIUser[];
   @observable last_message_id?: Snowflake;
   guild_id?: Snowflake;
   @observable parent_id: Snowflake;
@@ -28,7 +33,7 @@ export default class Channel {
   @observable last_pin_timestamp?: number;
   @observable default_auto_archive_duration?: number;
   @observable position?: number;
-  @observable permission_overwrites?: ChannelPermissionOverwrite[];
+  @observable permission_overwrites?: APIOverwrite[];
   @observable video_quality_mode?: number;
   @observable bitrate?: number;
   @observable user_limit?: number;
@@ -37,8 +42,8 @@ export default class Channel {
   @observable topic?: string;
   @observable invites?: APIInvite[];
   @observable retention_policy_id?: string;
-  @observable voice_states?: VoiceState[];
-  @observable read_states?: ReadState[];
+  @observable voice_states?: GatewayVoiceState[];
+  @observable read_states?: APIReadState[];
   @observable webhooks?: APIWebhook[];
   @observable flags: number;
   @observable default_thread_rate_limit_per_user: number;
@@ -180,6 +185,11 @@ export default class Channel {
   remove(id: string) {
     const message = this.get(id);
     if (message) this.messages.remove(message);
+  }
+
+  @action
+  updateMessage(data: APIMessage) {
+    this.get(data.id)?.update(data);
   }
 
   @action

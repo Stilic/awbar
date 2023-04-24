@@ -10,7 +10,7 @@ import {
   type APIGuild,
   type APIRole,
   type APIChannel,
-} from '@puyodead1/fosscord-api-types/v9';
+} from '@spacebarchat/spacebar-api-types/v9';
 import {ObservableMap, action, computed, makeObservable, observable} from 'mobx';
 import type Instance from './Instance';
 import Role from './Role';
@@ -140,18 +140,8 @@ export default class Guild {
   }
 
   @action
-  updateChannel(data: APIChannel) {
-    this.channels.get(data.id)?.update(data);
-  }
-
-  @action
   addRole(data: APIRole) {
     if (!this.roles.has(data.id)) this.roles.set(data.id, new Role(data, this));
-  }
-
-  @action
-  updateRole(data: APIRole) {
-    this.roles.get(data.id)?.update(data);
   }
 
   @action
@@ -159,6 +149,16 @@ export default class Guild {
     if (!data.user) throw 'Member does not have a valid user property';
     if (!this.members.has(data.user.id))
       this.members.set(data.user.id, new GuildMember(data, this));
+  }
+
+  @action
+  updateChannel(data: APIChannel) {
+    this.channels.get(data.id)?.update(data);
+  }
+
+  @action
+  updateRole(data: APIRole) {
+    this.roles.get(data.id)?.update(data);
   }
 
   @action

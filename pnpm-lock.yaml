@@ -1,9 +1,9 @@
 lockfileVersion: '6.0'
 
 dependencies:
-  '@stilic_dev/spacebar-types':
-    specifier: ^1.0.0
-    version: 1.0.0
+  '@spacebarchat/spacebar-api-types':
+    specifier: ^0.37.46
+    version: 0.37.46
   axios:
     specifier: ^1.3.5
     version: 1.3.5
@@ -369,8 +369,8 @@ packages:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
     dev: true
 
-  /@stilic_dev/spacebar-types@1.0.0:
-    resolution: {integrity: sha512-QcRug3EX4Ak1sbSAlS/KKqNOAmKOTI3ObAYjDBlOUhhvFQtpK8PulATVemTWlz4K+S/WCFVg3Tb1sX+29inz6w==}
+  /@spacebarchat/spacebar-api-types@0.37.46:
+    resolution: {integrity: sha512-fuNZIMBWKezpkyvZHvAfQ1boCfEoncP+odg+bqr824WiGldiiAqhBuye1v/TMYkAm6A4R2p9/ifkCqmFQgemKA==}
     dev: false
 
   /@sveltejs/adapter-auto@2.0.0(@sveltejs/kit@1.15.4):

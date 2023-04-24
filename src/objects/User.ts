@@ -3,7 +3,7 @@ import type {
   Snowflake,
   UserFlags,
   UserPremiumType,
-} from '@puyodead1/fosscord-api-types/v9';
+} from '@spacebarchat/spacebar-api-types/v9';
 import {action, computed, makeObservable, observable} from 'mobx';
 import type Instance from './Instance';
 

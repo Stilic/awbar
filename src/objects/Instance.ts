@@ -2,10 +2,16 @@ import {ObservableMap, action, makeObservable, observable, type IObservableArray
 import type {IAPILoginRequest, IAPILoginResponse} from '../interfaces/api';
 import REST from '../utils/REST';
 import User from './User';
-import type {APIChannel, APIUser, GatewayGuild, Snowflake} from '@puyodead1/fosscord-api-types/v9';
+import type {
+  APIChannel,
+  APIUser,
+  GatewayGuild,
+  Snowflake,
+} from '@spacebarchat/spacebar-api-types/v9';
 import Guild from './Guild';
 import Channel from './Channel';
 import GatewayConnection from './GatewayConnection';
+import MessageQueue from './MessageQueue';
 
 export default class Instance {
   readonly domain: string;
@@ -17,6 +23,8 @@ export default class Instance {
   @observable readonly guilds: ObservableMap<string, Guild>;
   @observable readonly privateChannels: ObservableMap<string, Channel>;
 
+  @observable readonly queue: MessageQueue;
+
   constructor(domain: string) {
     this.domain = domain;
     this.rest = new REST(this);
@@ -24,6 +32,8 @@ export default class Instance {
     this.users = new ObservableMap<Snowflake, User>();
     this.guilds = new ObservableMap<Snowflake, Guild>();
     this.privateChannels = new ObservableMap<Snowflake, Channel>();
+
+    this.queue = new MessageQueue();
 
     makeObservable(this);
   }
