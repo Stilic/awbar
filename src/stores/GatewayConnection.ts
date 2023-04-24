@@ -126,10 +126,11 @@ export default class GatewayConnection {
     }
   };
 
-  private onSocketMessage = (e: MessageEvent<GatewayReceivePayload>) => {
-    switch (e.data.op) {
+  private onSocketMessage = (e: MessageEvent<string>) => {
+    const data = JSON.parse(e.data);
+    switch (data.op) {
       case GatewayOpcodes.Dispatch:
-        this.handleDispatch(e.data);
+        this.handleDispatch(data);
         break;
       case GatewayOpcodes.Heartbeat:
         this.sendHeartbeat();
@@ -138,10 +139,10 @@ export default class GatewayConnection {
         this.cleanup();
         break;
       case GatewayOpcodes.InvalidSession:
-        this.handleInvalidSession(e.data.d);
+        this.handleInvalidSession(data.d);
         break;
       case GatewayOpcodes.Hello:
-        this.handleHello(e.data.d);
+        this.handleHello(data.d);
         break;
       case GatewayOpcodes.HeartbeatAck:
         this.heartbeatAck = true;

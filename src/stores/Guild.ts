@@ -115,8 +115,8 @@ export default class Guild {
     this.members = new ObservableMap<Snowflake, GuildMember>();
     this.roles = new ObservableMap<Snowflake, Role>();
 
-    data.channels.forEach(channel => this.addChannel(channel));
-    data.members.forEach(member => this.addMember(member));
+    // FIXME: hack to prevent errors after guild creation where channels is undefined
+    if (data.channels) data.channels.forEach(channel => this.addChannel(channel));
     data.roles.forEach(role => this.addRole(role));
 
     this.memberList = new GuildMemberList(this);

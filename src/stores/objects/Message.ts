@@ -91,12 +91,10 @@ export default class Message {
     makeObservable(this);
   }
 
-  @computed
   getCreationDate() {
     return new Date(this.timestamp);
   }
 
-  @computed
   getEditedDate() {
     return this.edited_timestamp ? new Date(this.edited_timestamp) : null;
   }

@@ -136,7 +136,6 @@ export default class Channel {
     Object.assign(this, data);
   }
 
-  @computed
   getCreationDate() {
     return new Date(this.created_at);
   }
@@ -164,19 +163,16 @@ export default class Channel {
     this.messages.push(new Message(data, this));
   }
 
-  @computed
   get(id: string) {
     return this.messages.find(message => message.id === id);
   }
 
-  @computed
   getAll() {
     return this.messages
       .slice()
       .sort((a, b) => a.getCreationDate().getTime() - b.getCreationDate().getTime());
   }
 
-  @computed
   has(id: string) {
     return this.messages.some(message => message.id === id);
   }

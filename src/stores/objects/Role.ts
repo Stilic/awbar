@@ -46,7 +46,6 @@ export default class Role {
     Object.assign(this, data);
   }
 
-  @computed
   getHexaColor() {
     return `#${this.color.toString(16).padStart(6, '0')}`;
   }
