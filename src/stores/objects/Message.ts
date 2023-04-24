@@ -20,7 +20,7 @@ import type {
   APIMessage,
 } from '@spacebarchat/spacebar-api-types/v9';
 import {action, computed, makeObservable, observable} from 'mobx';
-import type Channel from './Channel';
+import type Channel from '../Channel';
 
 export default class Message {
   id: Snowflake;

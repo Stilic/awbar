@@ -1,7 +1,7 @@
 import {ObservableMap, action, makeObservable, observable, type IObservableArray} from 'mobx';
 import type {IAPILoginRequest, IAPILoginResponse} from '../interfaces/api';
 import REST from '../utils/REST';
-import User from './User';
+import User from './objects/User';
 import type {
   APIChannel,
   APIUser,

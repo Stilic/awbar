@@ -13,9 +13,9 @@ import {
 } from '@spacebarchat/spacebar-api-types/v9';
 import {ObservableMap, action, computed, makeObservable, observable} from 'mobx';
 import type Instance from './Instance';
-import Role from './Role';
+import Role from './objects/Role';
 import Channel from './Channel';
-import type User from './User';
+import type User from './objects/User';
 
 export default class Guild {
   id: Snowflake;

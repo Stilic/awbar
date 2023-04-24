@@ -3,7 +3,7 @@ import axios, {AxiosHeaders} from 'axios';
 import { persisted } from 'svelte-local-storage-store';
 import { get, type Writable } from 'svelte/store';
 */
-import type Instance from '../objects/Instance';
+import type Instance from '../stores/Instance';
 
 // type TokenStore = Record<string, Record<string, string>>;
 

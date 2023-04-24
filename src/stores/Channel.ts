@@ -16,7 +16,7 @@ import {
   type APIMessage,
 } from '@spacebarchat/spacebar-api-types/v9';
 import {action, makeObservable, observable, type IObservableArray, computed} from 'mobx';
-import Message from './Message';
+import Message from './objects/Message';
 import type Instance from './Instance';
 
 export default class Channel {

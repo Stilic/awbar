@@ -2,7 +2,7 @@ import type {APIMessage, Snowflake} from '@spacebarchat/spacebar-api-types/v9';
 import {action, computed, makeAutoObservable, observable} from 'mobx';
 
 import type {IObservableArray} from 'mobx';
-import type User from './User';
+import type User from './objects/User';
 
 export enum QueuedMessageStatus {
   SENDING = 'sending',

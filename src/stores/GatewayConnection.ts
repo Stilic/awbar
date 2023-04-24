@@ -24,7 +24,7 @@ import {
 } from '@spacebarchat/spacebar-api-types/v9';
 import type Instance from './Instance';
 import UAParser from 'ua-parser-js';
-import User from './User';
+import User from './objects/User';
 import {runInAction} from 'mobx';
 
 // based off https://github.com/spacebarchat/client/blob/742255bbbe955705098b83b87b6067ad7de3b827/src/stores/GatewayConnectionStore.ts

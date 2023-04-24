@@ -1,6 +1,7 @@
 <script lang="ts">
   import {createForm} from 'svelte-forms-lib';
   import Globals from '../../Globals';
+  import type GatewayConnection from '../../stores/GatewayConnection';
 
   const {form, handleChange, handleSubmit} = createForm({
     initialValues: {
@@ -9,13 +10,13 @@
     },
     onSubmit: values => {
       Globals.instance
-        .getToken({
+        .createConnection({
           login: values.email,
           password: values.password,
           undelete: false,
         })
-        .then((token: string) => {
-          console.log(token);
+        .then((connection: GatewayConnection) => {
+          console.log(connection);
         });
     },
   });

@@ -5,7 +5,7 @@ import type {
   UserPremiumType,
 } from '@spacebarchat/spacebar-api-types/v9';
 import {action, computed, makeObservable, observable} from 'mobx';
-import type Instance from './Instance';
+import type Instance from '../Instance';
 
 export default class User {
   id: Snowflake;

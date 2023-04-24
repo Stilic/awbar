@@ -1,4 +1,4 @@
-import type Guild from './Guild';
+import type Guild from '../Guild';
 import {action, computed, makeObservable, observable} from 'mobx';
 import type {APIRole, APIRoleTags} from '@spacebarchat/spacebar-api-types/v9';
 
