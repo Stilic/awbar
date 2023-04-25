@@ -47,6 +47,10 @@ export default class GatewayConnection {
     else return false;
   }
 
+  getUser() {
+    return this.user;
+  }
+
   isReady() {
     return this.ready;
   }
@@ -58,6 +62,7 @@ export default class GatewayConnection {
   }
 
   connect() {
+    // TODO: move url handling to the instance class
     const socketUrl = new URL(`wss://${this.instance.domain}`);
     socketUrl.searchParams.append('v', '9');
     socketUrl.searchParams.append('encoding', 'json');
