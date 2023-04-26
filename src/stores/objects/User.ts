@@ -28,6 +28,8 @@ export default class User {
   premium_since?: string;
   @observable public_flags?: UserFlags;
 
+  readonly instance: Instance;
+
   @computed
   get tag(): string {
     return `${this.username}#${this.discriminator}`;
@@ -37,8 +39,6 @@ export default class User {
   get instanceTag(): string {
     return `${this.tag}@${this.instance.domain}`;
   }
-
-  readonly instance: Instance;
 
   constructor(data: APIUser, instance: Instance) {
     this.id = data.id;

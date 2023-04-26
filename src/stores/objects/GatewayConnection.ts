@@ -18,15 +18,15 @@ import {
   type GatewayMessageDeleteDispatchData,
   type GatewayMessageUpdateDispatchData,
   type GatewayReadyDispatchData,
-  type GatewayReceivePayload,
   type GatewaySendPayload,
+  type GatewayReceivePayload,
 } from '@spacebarchat/spacebar-api-types/v9';
-import type Instance from './Instance';
+import type Instance from '../Instance';
 import UAParser from 'ua-parser-js';
-import User from './objects/User';
-import {runInAction} from 'mobx';
+import User from './User';
+import {computed, reaction, runInAction} from 'mobx';
+import Logs from '../../utils/Logs';
 
-// based off https://github.com/spacebarchat/client/blob/742255bbbe955705098b83b87b6067ad7de3b827/src/stores/GatewayConnectionStore.ts
 export default class GatewayConnection {
   private readonly token: string;
   private socket?: WebSocket;
@@ -36,43 +36,49 @@ export default class GatewayConnection {
   private initialHeartbeatTimeout?: number;
   private sequence: number = 0;
   private heartbeatAck: boolean = true;
-  private sessionId?: string;
-  private ready: boolean = false;
+  // private sessionId?: string;
+  private _ready: boolean = false;
+  private _user?: User;
 
   readonly instance: Instance;
-  private user?: User;
 
+  @computed
   get isOpen() {
     if (this.socket) return this.socket.readyState == WebSocket.OPEN;
     else return false;
   }
 
-  getUser() {
-    return this.user;
+  @computed
+  get isReady() {
+    return this._ready;
   }
 
-  isReady() {
-    return this.ready;
+  @computed
+  get user() {
+    return this._user;
   }
 
   constructor(instance: Instance, token: string) {
     this.instance = instance;
     this.token = token;
+
+    reaction(() => instance.domain, this.connect);
     this.connect();
   }
 
-  connect() {
+  async connect() {
     // TODO: move url handling to the instance class
     const socketUrl = new URL(`wss://${this.instance.domain}`);
     socketUrl.searchParams.append('v', '9');
     socketUrl.searchParams.append('encoding', 'json');
-    this.socket = new WebSocket(socketUrl.href);
+    Logs.debug(`[Connect] ${socketUrl.href}`);
+    this.socket = new WebSocket(socketUrl);
 
-    this.socket!.onopen = this.onSocketOpen;
-    this.socket!.onmessage = this.onSocketMessage;
+    this.socket.onopen = this.onSocketOpen;
+    this.socket.onmessage = this.onSocketMessage;
     // TODO: implement logs and error handler
-    this.socket!.onerror = console.error;
-    this.socket!.onclose = this.onSocketClose;
+    this.socket.onerror = this.onSocketError;
+    this.socket.onclose = this.onSocketClose;
 
     this.dispatchHandlers.set(GatewayDispatchEvents.Ready, this.onReady);
     // this.dispatchHandlers.set(GatewayDispatchEvents.Resumed, this.onResumed);
@@ -94,12 +100,15 @@ export default class GatewayConnection {
     // this.dispatchHandlers.set(GatewayDispatchEvents.PresenceUpdate, this.onPresenceUpdate);
   }
 
-  disconnect() {
+  async disconnect(code?: number, reason?: string) {
+    Logs.debug(`[Connect] ${this.socket?.url}`);
+    this.socket?.close(code, reason);
     this.cleanup();
     this.instance.connections.remove(this);
   }
 
   private onSocketOpen = () => {
+    Logs.debug(`[Connected] ${this.socket?.url}`);
     const info = UAParser();
     const payload: GatewayIdentify = {
       op: GatewayOpcodes.Identify,
@@ -107,8 +116,11 @@ export default class GatewayConnection {
         token: this.token,
         properties: {
           os: info.os.name ?? '',
-          browser: info.browser.name ?? '',
+          browser: info.browser.name ?? 'Spacebar Web',
           device: info.device.type ?? '',
+          client_build_number: 0,
+          release_channel: 'dev',
+          browser_user_agent: info.ua,
         },
         compress: false,
         presence: {
@@ -131,11 +143,16 @@ export default class GatewayConnection {
     }
   };
 
+  private onSocketError = (e: Event) => {
+    Logs.error('[Gateway] Socket Error', e);
+  };
+
   private onSocketMessage = (e: MessageEvent<string>) => {
-    const data = JSON.parse(e.data);
-    switch (data.op) {
+    const payload = JSON.parse(e.data) as GatewayReceivePayload;
+    if (payload.op !== GatewayOpcodes.Dispatch) Logs.debug(`[Gateway] -> ${payload.op}`, payload);
+    switch (payload.op) {
       case GatewayOpcodes.Dispatch:
-        this.handleDispatch(data);
+        this.handleDispatch(payload);
         break;
       case GatewayOpcodes.Heartbeat:
         this.sendHeartbeat();
@@ -144,13 +161,16 @@ export default class GatewayConnection {
         this.cleanup();
         break;
       case GatewayOpcodes.InvalidSession:
-        this.handleInvalidSession(data.d);
+        this.handleInvalidSession(payload.d);
         break;
       case GatewayOpcodes.Hello:
-        this.handleHello(data.d);
+        this.handleHello(payload.d);
         break;
       case GatewayOpcodes.HeartbeatAck:
         this.heartbeatAck = true;
+        break;
+      default:
+        Logs.debug('Received unknown opcode');
         break;
     }
   };
@@ -190,6 +210,7 @@ export default class GatewayConnection {
   };
 
   private handleDispatch = (data: GatewayDispatchPayload) => {
+    Logs.debug(`[Gateway] -> ${data.t}`, data.d);
     this.sequence = data.s;
     const handler = this.dispatchHandlers.get(data.t);
     if (handler) handler(data.d);
@@ -198,6 +219,7 @@ export default class GatewayConnection {
   private sendJson(payload: GatewaySendPayload) {
     if (this.socket) {
       if (this.socket.readyState !== WebSocket.OPEN) return;
+      Logs.debug(`[Gateway] <- ${payload.op}`, payload);
       this.socket.send(JSON.stringify(payload));
     }
   }
@@ -222,9 +244,9 @@ export default class GatewayConnection {
 
   // dispatch handlers
   private onReady = (data: GatewayReadyDispatchData) => {
-    this.sessionId = data.session_id;
+    // this.sessionId = data.session_id;
 
-    this.user = new User(data.user, this.instance);
+    this._user = new User(data.user, this.instance);
 
     // TODO: store guilds
     for (const guild of data.guilds) this.instance.addGuild(guild);
@@ -234,7 +256,7 @@ export default class GatewayConnection {
     // TODO: store readstates
     for (const channel of data.private_channels) this.instance.addPrivateChannel(channel);
 
-    this.ready = true;
+    this._ready = true;
   };
 
   private onGuildCreate = (data: GatewayGuildCreateDispatchData) => {
@@ -273,7 +295,7 @@ export default class GatewayConnection {
 
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      console.warn(`[ChannelCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      Logs.warn(`[ChannelCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     guild.addChannel(data);
@@ -287,7 +309,7 @@ export default class GatewayConnection {
 
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      console.warn(`[ChannelDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
+      Logs.warn(`[ChannelDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     guild.channels.delete(data.id);
@@ -296,12 +318,12 @@ export default class GatewayConnection {
   private onMessageCreate = (data: GatewayMessageCreateDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      console.warn(`[MessageCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      Logs.warn(`[MessageCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     const channel = guild.channels.get(data.channel_id);
     if (!channel) {
-      console.warn(`[MessageCreate] Channel ${data.channel_id} not found for message ${data.id}`);
+      Logs.warn(`[MessageCreate] Channel ${data.channel_id} not found for message ${data.id}`);
       return;
     }
 
@@ -312,12 +334,12 @@ export default class GatewayConnection {
   private onMessageUpdate = (data: GatewayMessageUpdateDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      console.warn(`[MessageUpdate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      Logs.warn(`[MessageUpdate] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     const channel = guild.channels.get(data.channel_id);
     if (!channel) {
-      console.warn(`[MessageUpdate] Channel ${data.channel_id} not found for message ${data.id}`);
+      Logs.warn(`[MessageUpdate] Channel ${data.channel_id} not found for message ${data.id}`);
       return;
     }
 
@@ -327,12 +349,12 @@ export default class GatewayConnection {
   private onMessageDelete = (data: GatewayMessageDeleteDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      console.warn(`[MessageDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
+      Logs.warn(`[MessageDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     const channel = guild.channels.get(data.channel_id);
     if (!channel) {
-      console.warn(`[MessageDelete] Channel ${data.channel_id} not found for message ${data.id}`);
+      Logs.warn(`[MessageDelete] Channel ${data.channel_id} not found for message ${data.id}`);
       return;
     }
 
@@ -352,13 +374,12 @@ export default class GatewayConnection {
 
   private cleanup = () => {
     this.stopHeartbeater();
-    this.socket?.close();
     this.socket = undefined;
-    this.ready = false;
+    this._ready = false;
   };
 
   private reset = () => {
-    this.sessionId = undefined;
+    // this.sessionId = undefined;
     this.sequence = 0;
   };
 }

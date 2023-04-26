@@ -1,7 +1,7 @@
 <script lang="ts">
   import {createForm} from 'svelte-forms-lib';
-  import type GatewayConnection from '../../stores/GatewayConnection';
   import App from '../../App';
+  import type GatewayConnection from '../../stores/objects/GatewayConnection';
 
   const {form, handleChange, handleSubmit} = createForm({
     initialValues: {
@@ -16,7 +16,7 @@
           undelete: false,
         })
         .then((connection: GatewayConnection) => {
-          console.log(connection);
+          // TODO: main ui
         });
     },
   });

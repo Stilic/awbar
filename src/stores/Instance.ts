@@ -10,11 +10,12 @@ import type {
 } from '@spacebarchat/spacebar-api-types/v9';
 import Guild from './Guild';
 import Channel from './Channel';
-import GatewayConnection from './GatewayConnection';
+import GatewayConnection from './objects/GatewayConnection';
 import MessageQueue from './MessageQueue';
 
 export default class Instance {
-  readonly domain: string;
+  @observable readonly domain: string;
+
   readonly rest: REST;
 
   @observable readonly connections: IObservableArray<GatewayConnection>;

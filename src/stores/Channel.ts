@@ -170,7 +170,7 @@ export default class Channel {
   getAll() {
     return this.messages
       .slice()
-      .sort((a, b) => a.getCreationDate().getTime() - b.getCreationDate().getTime());
+      .sort((a, b) => a.creationDate.getTime() - b.creationDate.getTime());
   }
 
   has(id: string) {

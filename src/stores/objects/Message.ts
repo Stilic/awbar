@@ -55,6 +55,19 @@ export default class Message {
 
   readonly channel: Channel;
 
+  private _creationDate: Date;
+  private _editionDate?: Date;
+
+  @computed
+  get creationDate() {
+    return this._creationDate;
+  }
+
+  @computed
+  get editionDate() {
+    return this._editionDate;
+  }
+
   constructor(data: APIMessage, channel: Channel) {
     this.id = data.id;
     this.channel_id = data.channel_id;
@@ -88,19 +101,17 @@ export default class Message {
 
     this.channel = channel;
 
+    this._creationDate = new Date(this.timestamp);
+    if (this.edited_timestamp) this._editionDate = new Date(this.edited_timestamp);
+
     makeObservable(this);
-  }
-
-  getCreationDate() {
-    return new Date(this.timestamp);
-  }
-
-  getEditedDate() {
-    return this.edited_timestamp ? new Date(this.edited_timestamp) : null;
   }
 
   @action
   update(data: APIMessage) {
     Object.assign(this, data);
+
+    this._creationDate = new Date(this.timestamp);
+    if (this.edited_timestamp) this._editionDate = new Date(this.edited_timestamp);
   }
 }

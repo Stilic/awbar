@@ -23,6 +23,11 @@ export default class Role {
 
   readonly guild: Guild;
 
+  @computed
+  get hexaColor() {
+    return `#${this.color.toString(16).padStart(6, '0')}`;
+  }
+
   constructor(data: APIRole, guild: Guild) {
     this.id = data.id;
     this.name = data.name;
@@ -44,9 +49,5 @@ export default class Role {
   @action
   update(data: APIRole) {
     Object.assign(this, data);
-  }
-
-  getHexaColor() {
-    return `#${this.color.toString(16).padStart(6, '0')}`;
   }
 }
