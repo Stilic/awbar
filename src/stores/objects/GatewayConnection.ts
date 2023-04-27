@@ -258,7 +258,7 @@ export default class GatewayConnection {
 
     // this.sessionId = data.session_id;
 
-    this._user = new User(data.user, this.instance);
+    this.instance.addUser(data.user);
 
     // TODO: store guilds
     for (const guild of data.guilds) this.instance.addGuild(guild);
@@ -267,6 +267,12 @@ export default class GatewayConnection {
     // TODO: store relationships
     // TODO: store readstates
     for (const channel of data.private_channels) this.instance.addPrivateChannel(channel);
+
+    console.info(
+      `${this.getLogBase('Ready')} added ${data.guilds.length} guild(s), ${
+        (data.users?.length || 0) + 1
+      } user(s), ${data.private_channels.length} private channel(s)`,
+    );
 
     this._ready = true;
   };
