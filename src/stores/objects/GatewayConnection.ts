@@ -25,12 +25,12 @@ import type Instance from '../Instance';
 import UAParser from 'ua-parser-js';
 import User from './User';
 import {computed, reaction, runInAction} from 'mobx';
-import Logs from '../../utils/Logs';
 
 export default class GatewayConnection {
   private readonly token: string;
   private socket?: WebSocket;
   private dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void> = new Map();
+  private connectionStartTime?: number;
   private heartbeatInterval?: number;
   private heartbeater?: number;
   private initialHeartbeatTimeout?: number;
@@ -61,9 +61,7 @@ export default class GatewayConnection {
   constructor(instance: Instance, token: string) {
     this.instance = instance;
     this.token = token;
-
     reaction(() => instance.domain, this.connect);
-    this.connect();
   }
 
   async connect() {
@@ -71,7 +69,8 @@ export default class GatewayConnection {
     const socketUrl = new URL(`wss://${this.instance.domain}`);
     socketUrl.searchParams.append('v', '9');
     socketUrl.searchParams.append('encoding', 'json');
-    Logs.debug(`[Connect] ${socketUrl.href}`);
+    console.debug(`${this.getLogBase('Connect')} ${socketUrl.href}`);
+    this.connectionStartTime = Date.now();
     this.socket = new WebSocket(socketUrl);
 
     this.socket.onopen = this.onSocketOpen;
@@ -101,14 +100,19 @@ export default class GatewayConnection {
   }
 
   async disconnect(code?: number, reason?: string) {
-    Logs.debug(`[Connect] ${this.socket?.url}`);
+    console.debug(`${this.getLogBase('Disconnect')} ${this.socket?.url}`);
     this.socket?.close(code, reason);
     this.cleanup();
     this.instance.connections.remove(this);
   }
 
   private onSocketOpen = () => {
-    Logs.debug(`[Connected] ${this.socket?.url}`);
+    console.debug(
+      `${this.getLogBase('Connected')} ${this.socket?.url} (took ${
+        Date.now() - this.connectionStartTime!
+      }ms)`,
+    );
+
     const info = UAParser();
     const payload: GatewayIdentify = {
       op: GatewayOpcodes.Identify,
@@ -144,12 +148,13 @@ export default class GatewayConnection {
   };
 
   private onSocketError = (e: Event) => {
-    Logs.error('[Gateway] Socket Error', e);
+    console.error(`${this.getLogBase()} Socket Error`, e);
   };
 
   private onSocketMessage = (e: MessageEvent<string>) => {
     const payload = JSON.parse(e.data) as GatewayReceivePayload;
-    if (payload.op !== GatewayOpcodes.Dispatch) Logs.debug(`[Gateway] -> ${payload.op}`, payload);
+    if (payload.op !== GatewayOpcodes.Dispatch)
+      console.debug(`${this.getLogBase()} -> ${payload.op}`, payload);
     switch (payload.op) {
       case GatewayOpcodes.Dispatch:
         this.handleDispatch(payload);
@@ -170,7 +175,7 @@ export default class GatewayConnection {
         this.heartbeatAck = true;
         break;
       default:
-        Logs.debug('Received unknown opcode');
+        console.debug(`${this.getLogBase()} Received unknown opcode`);
         break;
     }
   };
@@ -210,7 +215,7 @@ export default class GatewayConnection {
   };
 
   private handleDispatch = (data: GatewayDispatchPayload) => {
-    Logs.debug(`[Gateway] -> ${data.t}`, data.d);
+    console.debug(`${this.getLogBase()} -> ${data.t}`, data.d);
     this.sequence = data.s;
     const handler = this.dispatchHandlers.get(data.t);
     if (handler) handler(data.d);
@@ -219,7 +224,7 @@ export default class GatewayConnection {
   private sendJson(payload: GatewaySendPayload) {
     if (this.socket) {
       if (this.socket.readyState !== WebSocket.OPEN) return;
-      Logs.debug(`[Gateway] <- ${payload.op}`, payload);
+      console.debug(`${this.getLogBase()} <- ${payload.op}`, payload);
       this.socket.send(JSON.stringify(payload));
     }
   }
@@ -230,6 +235,11 @@ export default class GatewayConnection {
   };
 
   private handleHello = (data: GatewayHelloData) => {
+    console.info(
+      `${this.getLogBase('Hello')} heartbeat interval: ${data.heartbeat_interval} (took ${
+        Date.now() - this.connectionStartTime!
+      }ms)`,
+    );
     this.heartbeatInterval = data.heartbeat_interval;
     this.startHeartbeater();
   };
@@ -244,6 +254,8 @@ export default class GatewayConnection {
 
   // dispatch handlers
   private onReady = (data: GatewayReadyDispatchData) => {
+    console.info(`${this.getLogBase('Ready')} took ${Date.now() - this.connectionStartTime!}ms`);
+
     // this.sessionId = data.session_id;
 
     this._user = new User(data.user, this.instance);
@@ -295,7 +307,7 @@ export default class GatewayConnection {
 
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      Logs.warn(`[ChannelCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      console.warn(`[ChannelCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     guild.addChannel(data);
@@ -309,7 +321,7 @@ export default class GatewayConnection {
 
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      Logs.warn(`[ChannelDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
+      console.warn(`[ChannelDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     guild.channels.delete(data.id);
@@ -318,12 +330,12 @@ export default class GatewayConnection {
   private onMessageCreate = (data: GatewayMessageCreateDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      Logs.warn(`[MessageCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      console.warn(`[MessageCreate] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     const channel = guild.channels.get(data.channel_id);
     if (!channel) {
-      Logs.warn(`[MessageCreate] Channel ${data.channel_id} not found for message ${data.id}`);
+      console.warn(`[MessageCreate] Channel ${data.channel_id} not found for message ${data.id}`);
       return;
     }
 
@@ -334,12 +346,12 @@ export default class GatewayConnection {
   private onMessageUpdate = (data: GatewayMessageUpdateDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      Logs.warn(`[MessageUpdate] Guild ${data.guild_id} not found for channel ${data.id}`);
+      console.warn(`[MessageUpdate] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     const channel = guild.channels.get(data.channel_id);
     if (!channel) {
-      Logs.warn(`[MessageUpdate] Channel ${data.channel_id} not found for message ${data.id}`);
+      console.warn(`[MessageUpdate] Channel ${data.channel_id} not found for message ${data.id}`);
       return;
     }
 
@@ -349,12 +361,12 @@ export default class GatewayConnection {
   private onMessageDelete = (data: GatewayMessageDeleteDispatchData) => {
     const guild = this.instance.guilds.get(data.guild_id!);
     if (!guild) {
-      Logs.warn(`[MessageDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
+      console.warn(`[MessageDelete] Guild ${data.guild_id} not found for channel ${data.id}`);
       return;
     }
     const channel = guild.channels.get(data.channel_id);
     if (!channel) {
-      Logs.warn(`[MessageDelete] Channel ${data.channel_id} not found for message ${data.id}`);
+      console.warn(`[MessageDelete] Channel ${data.channel_id} not found for message ${data.id}`);
       return;
     }
 
@@ -382,4 +394,10 @@ export default class GatewayConnection {
     // this.sessionId = undefined;
     this.sequence = 0;
   };
+
+  private getLogBase(event?: string): string {
+    let base = `[${this.instance.domain} (Gateway ${this.instance.connections.indexOf(this)})]`;
+    if (event) base += ` [${event}]`;
+    return base;
+  }
 }

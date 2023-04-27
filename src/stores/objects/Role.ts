@@ -24,7 +24,7 @@ export default class Role {
   readonly guild: Guild;
 
   @computed
-  get hexaColor() {
+  get hexaColor(): string {
     return `#${this.color.toString(16).padStart(6, '0')}`;
   }
 

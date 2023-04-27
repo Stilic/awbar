@@ -80,6 +80,7 @@ export default class Instance {
           if ('token' in r && 'settings' in r) {
             const connection = new GatewayConnection(this, r.token);
             this.connections.push(connection);
+            connection.connect();
             return resolve(connection);
           } else {
             console.error('error on login');

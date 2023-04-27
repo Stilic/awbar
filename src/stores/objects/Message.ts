@@ -59,12 +59,12 @@ export default class Message {
   private _editionDate?: Date;
 
   @computed
-  get creationDate() {
+  get creationDate(): Date {
     return this._creationDate;
   }
 
   @computed
-  get editionDate() {
+  get editionDate(): Date | undefined {
     return this._editionDate;
   }
 
