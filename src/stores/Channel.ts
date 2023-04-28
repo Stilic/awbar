@@ -15,7 +15,7 @@ import {
   Routes,
   type APIMessage,
 } from '@spacebarchat/spacebar-api-types/v9';
-import {action, makeObservable, observable, type IObservableArray, computed} from 'mobx';
+import {action, makeObservable, observable, type IObservableArray} from 'mobx';
 import Message from './objects/Message';
 import type Instance from './Instance';
 
@@ -160,7 +160,9 @@ export default class Channel {
 
   @action
   add(data: APIMessage) {
-    this.messages.push(new Message(data, this));
+    const message = new Message(data, this);
+    this.messages.push(message);
+    return message;
   }
 
   get(id: string) {
@@ -180,7 +182,8 @@ export default class Channel {
   @action
   remove(id: string) {
     const message = this.get(id);
-    if (message) this.messages.remove(message);
+    if (message) return this.messages.remove(message);
+    else return false;
   }
 
   @action

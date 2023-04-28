@@ -23,8 +23,8 @@ import {
 } from '@spacebarchat/spacebar-api-types/v9';
 import type Instance from '../Instance';
 import UAParser from 'ua-parser-js';
-import User from './User';
-import {computed, reaction, runInAction} from 'mobx';
+import type User from './User';
+import {action, computed, makeObservable, observable, runInAction} from 'mobx';
 
 export default class GatewayConnection {
   private readonly token: string;
@@ -34,22 +34,22 @@ export default class GatewayConnection {
   private heartbeatInterval?: number;
   private heartbeater?: number;
   private initialHeartbeatTimeout?: number;
-  private sequence: number = 0;
-  private heartbeatAck: boolean = true;
+  private sequence = 0;
+  private heartbeatAck = true;
   // private sessionId?: string;
-  private _ready: boolean = false;
-  private _user?: User;
+  @observable private _ready = false;
+  @observable private _user?: User;
 
   readonly instance: Instance;
 
   @computed
-  get isOpen() {
+  get open() {
     if (this.socket) return this.socket.readyState == WebSocket.OPEN;
     else return false;
   }
 
   @computed
-  get isReady() {
+  get ready() {
     return this._ready;
   }
 
@@ -58,10 +58,23 @@ export default class GatewayConnection {
     return this._user;
   }
 
+  @action
+  private setReady(value: boolean) {
+    this._ready = value;
+  }
+
+  @action
+  private setUser(value: User) {
+    this._user = value;
+  }
+
   constructor(instance: Instance, token: string) {
     this.instance = instance;
     this.token = token;
-    reaction(() => instance.domain, this.connect);
+
+    makeObservable(this);
+
+    this.connect();
   }
 
   async connect() {
@@ -229,6 +242,7 @@ export default class GatewayConnection {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private handleInvalidSession = (resumable: boolean) => {
     this.cleanup();
     // TODO: handle resumable
@@ -259,6 +273,7 @@ export default class GatewayConnection {
     // this.sessionId = data.session_id;
 
     this.instance.addUser(data.user);
+    this.setUser(this.instance.users.get(data.user.id)!);
 
     // TODO: store guilds
     for (const guild of data.guilds) this.instance.addGuild(guild);
@@ -274,7 +289,7 @@ export default class GatewayConnection {
       } user(s), ${data.private_channels.length} private channel(s)`,
     );
 
-    this._ready = true;
+    this.setReady(true);
   };
 
   private onGuildCreate = (data: GatewayGuildCreateDispatchData) => {
@@ -393,7 +408,7 @@ export default class GatewayConnection {
   private cleanup = () => {
     this.stopHeartbeater();
     this.socket = undefined;
-    this._ready = false;
+    this.setReady(false);
   };
 
   private reset = () => {

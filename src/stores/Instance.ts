@@ -1,5 +1,4 @@
 import {ObservableMap, action, makeObservable, observable, type IObservableArray} from 'mobx';
-import type {IAPILoginRequest, IAPILoginResponse} from '../interfaces/api';
 import REST from '../utils/REST';
 import User from './objects/User';
 import type {
@@ -42,23 +41,20 @@ export default class Instance {
   }
 
   @action
+  addConnection(token: string) {
+    const connection = new GatewayConnection(this, token);
+    this.connections.push(connection);
+    return connection;
+  }
+
+  @action
   addUser(data: APIUser) {
     if (!this.users.has(data.id)) this.users.set(data.id, new User(data, this));
   }
 
   @action
-  updateUser(data: APIUser) {
-    this.users.get(data.id)?.update(data);
-  }
-
-  @action
   addGuild(data: GatewayGuild) {
     if (!this.guilds.has(data.id)) this.guilds.set(data.id, new Guild(data, this));
-  }
-
-  @action
-  updateGuild(data: GatewayGuild) {
-    this.guilds.get(data.id)?.update(data);
   }
 
   @action
@@ -68,26 +64,17 @@ export default class Instance {
   }
 
   @action
-  updatePrivateChannel(data: APIChannel) {
-    this.privateChannels.get(data.id)?.update(data);
+  updateUser(data: APIUser) {
+    this.users.get(data.id)?.update(data);
   }
 
-  createConnection(credentials: IAPILoginRequest): Promise<GatewayConnection> {
-    return new Promise((resolve, reject) => {
-      return this.rest
-        .post<IAPILoginRequest, IAPILoginResponse>('auth/login', credentials)
-        .then(r => {
-          if ('token' in r && 'settings' in r) {
-            const connection = new GatewayConnection(this, r.token);
-            this.connections.push(connection);
-            connection.connect();
-            return resolve(connection);
-          } else {
-            console.error('error on login');
-            reject();
-          }
-        })
-        .catch(reject);
-    });
+  @action
+  updateGuild(data: GatewayGuild) {
+    this.guilds.get(data.id)?.update(data);
+  }
+
+  @action
+  updatePrivateChannel(data: APIChannel) {
+    this.privateChannels.get(data.id)?.update(data);
   }
 }

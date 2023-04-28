@@ -1,8 +1,8 @@
-import {redirect} from '@sveltejs/kit';
 import type {LayoutLoad} from './$types';
-
-const loginRoute = '/login';
+import App from '../App';
+import {browser} from '$app/environment';
+import {goto} from '$app/navigation';
 
 export const load = (({route}) => {
-  if (route.id !== loginRoute) throw redirect(307, loginRoute);
+  if (browser && !App.currentUser && route.id !== '/login') throw goto('/login');
 }) satisfies LayoutLoad;

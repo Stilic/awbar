@@ -1,8 +1,9 @@
 <script lang="ts">
   import {createForm} from 'svelte-forms-lib';
   import App from '../../App';
-  import type GatewayConnection from '../../stores/objects/GatewayConnection';
   import {goto} from '$app/navigation';
+  import {reaction} from 'mobx';
+  import type {IAPILoginRequest, IAPILoginResponse} from '../../interfaces/api';
 
   const {form, handleChange, handleSubmit} = createForm({
     initialValues: {
@@ -10,14 +11,32 @@
       password: '',
     },
     onSubmit: values => {
-      App.getCurrentInstance()
-        ?.createConnection({
+      const instance = Array.from(App.instances.values())[0];
+      instance.rest
+        .post<IAPILoginRequest, IAPILoginResponse>('auth/login', {
           login: values.email,
           password: values.password,
           undelete: false,
         })
-        .then((connection: GatewayConnection) => {
-          goto('/channels');
+        .then(r => {
+          if ('token' in r && 'settings' in r) {
+            const connection = instance.addConnection(r.token);
+            const ready = reaction(
+              () => connection.ready,
+              () => {
+                if (connection.user) {
+                  App.currentUser = connection.user;
+                  goto('/channels/@me');
+                  ready();
+                }
+              },
+            );
+          }
+          //  else if ('ticket' in r)
+          //   return resolve(r);
+          else {
+            console.error('error on login');
+          }
         });
     },
   });

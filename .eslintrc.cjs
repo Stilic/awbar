@@ -1,8 +1,9 @@
 module.exports = {
   rules: {
-    'no-case-declarations': off,
-    '@typescript-eslint/no-explicit-any': 'off',
+    'no-case-declarations': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
   },
   root: true,
   parser: '@typescript-eslint/parser',

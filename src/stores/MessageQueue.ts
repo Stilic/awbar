@@ -1,5 +1,5 @@
 import type {APIMessage, Snowflake} from '@spacebarchat/spacebar-api-types/v9';
-import {action, computed, makeAutoObservable, observable} from 'mobx';
+import {action, makeObservable, observable} from 'mobx';
 
 import type {IObservableArray} from 'mobx';
 import type User from './objects/User';
@@ -30,38 +30,42 @@ export default class MessageQueue {
   @observable private readonly messages: IObservableArray<QueuedMessage> = observable.array();
 
   constructor() {
-    makeAutoObservable(this);
+    makeObservable(this);
   }
 
   @action
   add(data: QueuedMessageData) {
-    this.messages.push({
+    const queuedMessage = {
       ...data,
       timestamp: new Date(),
       status: QueuedMessageStatus.SENDING,
-    });
+    };
+    this.messages.push(queuedMessage);
+    return queuedMessage;
   }
 
   @action
   remove(id: string) {
-    const message = this.messages.find(x => x.id === id)!;
-    this.messages.remove(message);
+    const message = this.messages.find(x => x.id === id);
+    if (message) return this.messages.remove(message);
+    else return false;
   }
 
   @action
   send(id: string) {
     const message = this.messages.find(x => x.id === id)!;
-    message.status = QueuedMessageStatus.SENDING;
+    if (message) message.status = QueuedMessageStatus.SENDING;
   }
 
   @action
   error(id: string, error: string) {
     const message = this.messages.find(x => x.id === id)!;
-    message.error = error;
-    message.status = QueuedMessageStatus.FAILED;
+    if (message) {
+      message.error = error;
+      message.status = QueuedMessageStatus.FAILED;
+    }
   }
 
-  @computed
   get(channel: Snowflake) {
     return this.messages.filter(message => message.channel === channel);
   }
