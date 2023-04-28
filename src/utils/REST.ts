@@ -5,43 +5,25 @@ import { get, type Writable } from 'svelte/store';
 */
 import type Instance from '../stores/Instance';
 
-// type TokenStore = Record<string, Record<string, string>>;
-
 export default class REST {
-  // private static tokenStore: Writable<TokenStore> = persisted<TokenStore>('tokens', {});
+  private static readonly defaultHeaders: Record<string, string> = {
+    mode: 'cors',
+    accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
 
   readonly instance: Instance;
 
   constructor(instance: Instance) {
     this.instance = instance;
-
-    /*
-		const token?: string = get(REST.tokenStore)[this.user.instance.domain][
-			this.user.tag
-		];
-		if (token) {
-			this.token = token;
-			console.log('loaded token for ' + this.user.instanceTag);
-		}
-		*/
   }
-
-  /*
-	setToken(token: string) {
-		this.token = token;
-
-		const tokens: TokenStore = get(REST.tokenStore);
-		tokens[this.user.instance.domain][this.user.tag] = token;
-		REST.tokenStore.set(tokens);
-	}
-	*/
 
   private makeAPIUrl(path: string) {
     return new URL(`/api/${path}`, `https://${this.instance.domain}`).href;
   }
 
   async get<T>(path: string, queryParams: Record<string, any> = {}, token?: string): Promise<T> {
-    const headers = new AxiosHeaders();
+    const headers = new AxiosHeaders(REST.defaultHeaders);
     if (token) headers.setAuthorization(token);
     return new Promise((resolve, reject) => {
       return axios
@@ -60,7 +42,7 @@ export default class REST {
     queryParams: Record<string, any> = {},
     token?: string,
   ): Promise<U> {
-    const headers = new AxiosHeaders();
+    const headers = new AxiosHeaders(REST.defaultHeaders);
     if (token) headers.setAuthorization(token);
     return new Promise((resolve, reject) => {
       return axios
