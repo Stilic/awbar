@@ -2,6 +2,7 @@
   import {createForm} from 'svelte-forms-lib';
   import App from '../../App';
   import type GatewayConnection from '../../stores/objects/GatewayConnection';
+  import {goto} from '$app/navigation';
 
   const {form, handleChange, handleSubmit} = createForm({
     initialValues: {
@@ -16,7 +17,7 @@
           undelete: false,
         })
         .then((connection: GatewayConnection) => {
-          // TODO: main ui
+          goto('/channels');
         });
     },
   });
