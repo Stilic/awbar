@@ -1,12 +1,7 @@
 import {ObservableMap, action, makeObservable, observable, type IObservableArray} from 'mobx';
 import REST from '../utils/REST';
 import User from './objects/User';
-import type {
-  APIChannel,
-  APIUser,
-  GatewayGuild,
-  Snowflake,
-} from '@spacebarchat/spacebar-api-types/v9';
+import type {APIChannel, APIUser, GatewayGuild} from '@spacebarchat/spacebar-api-types/v9';
 import Guild from './Guild';
 import Channel from './Channel';
 import GatewayConnection from './objects/GatewayConnection';
@@ -15,27 +10,18 @@ import MessageQueue from './MessageQueue';
 export default class Instance {
   @observable readonly domain: string;
 
-  readonly rest: REST;
+  readonly rest: REST = new REST(this);
 
-  @observable readonly connections: IObservableArray<GatewayConnection>;
+  @observable readonly connections: IObservableArray<GatewayConnection> = observable.array();
 
-  @observable readonly users: ObservableMap<string, User>;
-  @observable readonly guilds: ObservableMap<string, Guild>;
-  @observable readonly privateChannels: ObservableMap<string, Channel>;
+  @observable readonly users: ObservableMap<string, User> = new ObservableMap();
+  @observable readonly guilds: ObservableMap<string, Guild> = new ObservableMap();
+  @observable readonly privateChannels: ObservableMap<string, Channel> = new ObservableMap();
 
-  @observable readonly queue: MessageQueue;
+  @observable readonly queue: MessageQueue = new MessageQueue();
 
   constructor(domain: string) {
     this.domain = domain;
-    this.rest = new REST(this);
-
-    this.connections = observable.array();
-
-    this.users = new ObservableMap<Snowflake, User>();
-    this.guilds = new ObservableMap<Snowflake, Guild>();
-    this.privateChannels = new ObservableMap<Snowflake, Channel>();
-
-    this.queue = new MessageQueue();
 
     makeObservable(this);
   }

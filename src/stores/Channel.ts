@@ -76,7 +76,6 @@ export default class Channel {
     this.topic = data.topic;
     this.invites = data.invites;
     this.retention_policy_id = data.retention_policy_id;
-    // this.messages =
     this.voice_states = data.voice_states;
     this.read_states = data.read_states;
     this.webhooks = data.webhooks;

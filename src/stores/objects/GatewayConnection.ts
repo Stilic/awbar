@@ -25,6 +25,7 @@ import type Instance from '../Instance';
 import UAParser from 'ua-parser-js';
 import type User from './User';
 import {action, computed, makeObservable, observable, runInAction} from 'mobx';
+import App from '../../App';
 
 export default class GatewayConnection {
   private readonly token: string;
@@ -273,7 +274,10 @@ export default class GatewayConnection {
     // this.sessionId = data.session_id;
 
     this.instance.addUser(data.user);
-    this.setUser(this.instance.users.get(data.user.id)!);
+
+    const user = this.instance.users.get(data.user.id)!;
+    this.setUser(user);
+    App.saveUser(user, this.token);
 
     // TODO: store guilds
     for (const guild of data.guilds) this.instance.addGuild(guild);
