@@ -9,12 +9,10 @@ export default class Storage<T> {
 
   readonly id: string;
   private storage: Record<string, T>;
-  onReady?: (storage: Storage<T>) => void;
 
   constructor(id: string, onReady?: (storage: Storage<T>) => void) {
     this.id = id;
     this.storage = {};
-    this.onReady = onReady;
 
     if (browser) {
       const load = () => {
