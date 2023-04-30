@@ -34,8 +34,6 @@
     "@fingerprintjs/fingerprintjs": "^3.4.1",
     "@spacebarchat/spacebar-api-types": "^0.37.46",
     "axios": "^1.3.6",
-    "crypto-js": "^4.1.1",
-    "localstorage-slim": "^2.4.0",
     "mobx": "^6.9.0",
     "svelte-forms-lib": "^2.0.1",
     "ua-parser-js": "^1.0.35"

@@ -21,13 +21,13 @@
         .then(r => {
           if ('token' in r && 'settings' in r) {
             const connection = instance.addConnection(r.token);
-            const ready = reaction(
+            const readyReaction = reaction(
               () => connection.ready,
-              () => {
-                if (connection.user) {
+              value => {
+                if (value) {
                   App.currentUser = connection.user;
                   goto('/channels/@me');
-                  ready();
+                  readyReaction();
                 }
               },
             );
