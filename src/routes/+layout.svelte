@@ -1,4 +1,5 @@
 <script lang="ts">
+  import {page} from '$app/stores';
   import {reaction} from 'mobx';
   import App from '../App';
 
@@ -14,7 +15,7 @@
   }
 </script>
 
-{#if user}
+{#if user || $page.route.id == 'login'}
   <slot />
 {:else}
   <p>Loading...</p>
