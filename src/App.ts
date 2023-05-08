@@ -77,7 +77,6 @@ export default class App {
     }
   }
 
-  @action
   static saveUser(user: User, token: string) {
     this.connectedUsers.get(user.instance.domain).then(users => {
       if (!users) users = {};
@@ -91,6 +90,20 @@ export default class App {
         if (!currentUser) App.preferences.set('currentUser', `${user.instance.domain} ${user.id}`);
       });
       this.connectedUsers.set(user.instance.domain, users);
+    });
+  }
+
+  static removeUser(instance: Instance, token: string) {
+    this.connectedUsers.get(instance.domain).then(users => {
+      if (!users) return;
+      for (const id in users) {
+        const user = users[id];
+        if (user && user.token == token) {
+          delete users[id];
+          break;
+        }
+      }
+      this.connectedUsers.set(instance.domain, users);
     });
   }
 
