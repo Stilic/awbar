@@ -1,7 +1,7 @@
 <script lang="ts">
   import {reaction} from 'mobx';
   import App from '../App';
-  import '../app.scss';
+  import '../app.css';
   import {goto} from '$app/navigation';
 
   let ready: boolean = false;

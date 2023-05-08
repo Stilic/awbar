@@ -1,3 +1,3 @@
-<button class="rounded-sm bg-purple-500 p-2 hover:bg-purple-600" {...$$restProps}>
+<button class="rounded bg-amber-600 p-2 hover:bg-amber-700" {...$$restProps}>
   <slot />
 </button>

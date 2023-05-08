@@ -9,6 +9,8 @@
     IAPILoginResponseError,
   } from '../../interfaces/api';
   import Button from '../../components/Button.svelte';
+  import Container from '../../components/Container.svelte';
+  import Input from '../../components/Input.svelte';
   import HCaptcha from 'svelte-hcaptcha';
   import type Instance from '../../stores/Instance';
   import type {AxiosError} from 'axios';
@@ -76,26 +78,40 @@
   }
 </script>
 
-{#if captchaSiteKey}
-  <HCaptcha sitekey={captchaSiteKey} on:success={handleCaptchaSucess} bind:this={captcha} />
-{:else}
-  <form on:submit={handleSubmit}>
-    <label for="instance">Connect to</label>
-    <Button type="button">{instance ? instance.domain : '...'}</Button>
+<Container>
+  {#if captchaSiteKey}
+    <h1>Let's check if you aren't a robot!</h1>
+    <br />
+    <div class="flex flex-col items-center">
+      <HCaptcha sitekey={captchaSiteKey} on:success={handleCaptchaSucess} bind:this={captcha} />
+    </div>
+  {:else}
+    <h1>Welcome back to Awbar!</h1>
+    <h3>It's great to see you again!</h3>
 
-    <label for="email">Email</label>
-    <input id="email" name="email" type="email" on:change={handleChange} bind:value={$form.email} />
+    <form class="mt-6 flex flex-col space-y-3" on:submit={handleSubmit}>
+      <label for="instance">Connect to</label>
+      <Button type="button">{instance ? instance.domain : '...'}</Button>
 
-    <label for="password">Password</label>
-    <input
-      id="password"
-      name="password"
-      type="password"
-      on:change={handleChange}
-      bind:value={$form.password} />
+      <label for="email">Email</label>
+      <Input
+        id="email"
+        name="email"
+        type="email"
+        on:change={handleChange}
+        bind:value={$form.email} />
 
-    <!-- <a>I forgot my password</a> -->
+      <label for="password">Password</label>
+      <Input
+        id="password"
+        name="password"
+        type="password"
+        on:change={handleChange}
+        bind:value={$form.password} />
 
-    <Button>Submit</Button>
-  </form>
-{/if}
+      <a>Forgot your password?</a>
+
+      <Button type="submit">Submit</Button>
+    </form>
+  {/if}
+</Container>

@@ -5,7 +5,6 @@
     @apply bg-gray-700;
     @apply text-white;
   }
-
   h1 {
     @apply text-2xl;
   }
@@ -16,7 +15,15 @@
     @apply text-lg;
   }
   a {
-    @apply text-blue-600 underline;
+    @apply text-blue-400 underline;
+  }
+  label {
+    @apply self-start;
+  }
+  button,
+  input,
+  textarea {
+    @apply focus:outline focus:outline-1 focus:outline-zinc-200;
   }
 }
 
