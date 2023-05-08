@@ -3,7 +3,6 @@ import Instance from './stores/Instance';
 import type User from './stores/objects/User';
 import Storage from './utils/Storage';
 import type {Snowflake} from '@spacebarchat/spacebar-api-types/v9';
-import {goto} from '$app/navigation';
 import {browser} from '$app/environment';
 import type GatewayConnection from './stores/objects/GatewayConnection';
 
@@ -38,7 +37,6 @@ export default class App {
         user => {
           if (user) {
             this.currentUser = user;
-            goto('/channels/@me');
             userReaction();
           }
         },
@@ -70,8 +68,6 @@ export default class App {
               }
             });
           }
-
-          if (domains.length <= 0) goto('/login');
         });
       });
 

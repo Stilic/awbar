@@ -35,7 +35,6 @@ export default class REST {
     const domains = await this.domainsPromise;
     const url = new URL(domains.apiEndpoint);
     url.pathname += `/${path}`;
-    console.log(url.href);
     return url.href;
   }
 

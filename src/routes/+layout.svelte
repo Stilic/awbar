@@ -1,22 +1,31 @@
 <script lang="ts">
-  import {page} from '$app/stores';
   import {reaction} from 'mobx';
   import App from '../App';
+  import '../app.scss';
+  import {goto} from '$app/navigation';
 
-  let user = App.currentUser;
-  if (!user) {
-    const readyReaction = reaction(
-      () => App.currentUser,
-      value => {
-        user = value;
-        readyReaction();
-      },
-    );
-  }
+  let ready: boolean = false;
+  const readyReaction = reaction(
+    () => App.currentUser,
+    value => {
+      ready = value != undefined;
+      readyReaction();
+    },
+  );
+
+  App.preferences.get('currentUser').then(value => {
+    if (!value) {
+      goto('/login');
+      ready = true;
+    } else goto('/channels/@me');
+  });
 </script>
 
-{#if user || $page.route.id == 'login'}
+{#if ready}
   <slot />
 {:else}
-  <p>Loading...</p>
+  <div class="flex h-screen flex-col items-center justify-center">
+    <h1>Awbar</h1>
+    <p>Loading...</p>
+  </div>
 {/if}
