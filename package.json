@@ -41,6 +41,7 @@
     "axios": "^1.4.0",
     "mobx": "^6.9.0",
     "svelte-forms-lib": "^2.0.1",
+    "svelte-hcaptcha": "github:Stilic/svelte-hcaptcha",
     "ua-parser-js": "^1.0.35"
   },
   "type": "module"

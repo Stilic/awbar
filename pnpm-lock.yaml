@@ -16,6 +16,9 @@ dependencies:
   svelte-forms-lib:
     specifier: ^2.0.1
     version: 2.0.1
+  svelte-hcaptcha:
+    specifier: github:Stilic/svelte-hcaptcha
+    version: 0.1.1
   ua-parser-js:
     specifier: ^1.0.35
     version: 1.0.35
@@ -2013,6 +2016,10 @@ packages:
     resolution: {integrity: sha512-kwbJ3ynsepsrrJyAMrvSc0Lj/myc9vfI2DL8OKxgArZimrNYsRh1gENYhvrcKEI3BiZrv8q3VFfmGo/GMyk7Zg==}
     dependencies:
       dequal: 2.0.3
+    dev: false
+
+  /svelte-hcaptcha@0.1.1:
+    resolution: {integrity: sha512-iFF3HwfrCRciJnDs4Y9/rpP/BM2U/5zt+vh+9d4tALPAHVkcANiJIKqYuS835pIaTm6gt+xOzjfFI3cgiRI29A==}
     dev: false
 
   /svelte-hmr@0.15.1(svelte@3.59.0):
