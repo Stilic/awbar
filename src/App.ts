@@ -21,7 +21,7 @@ export default class App {
   private static connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
   @observable static currentUser?: User;
 
-  static readonly defaultInstance: string = 'old.server.spacebar.chat';
+  static readonly defaultInstance: string = 'spacebar.stilic.ml';
   @observable static readonly instances: ObservableMap<string, Instance> = new ObservableMap();
 
   @computed

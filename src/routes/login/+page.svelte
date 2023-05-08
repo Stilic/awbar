@@ -8,12 +8,16 @@
     IAPILoginResponse,
     IAPILoginResponseError,
   } from '../../interfaces/api';
-  import Button from '../../components/Button.svelte';
-  import Container from '../../components/Container.svelte';
-  import Input from '../../components/Input.svelte';
+  import Button from '../../components/ui/Button.svelte';
+  import Container from '../../components/ui/Container.svelte';
+  import Input from '../../components/ui/Input.svelte';
+  import Modal from '../../components/ui/Modal.svelte';
   import HCaptcha from 'svelte-hcaptcha';
   import type Instance from '../../stores/Instance';
   import type {AxiosError} from 'axios';
+  import InstanceSelection from '../../components/InstanceSelection.svelte';
+
+  let modal: Modal;
 
   let instance: Instance = Array.from(App.instances.values())[0];
   let captchaSiteKey: string | undefined;
@@ -76,6 +80,10 @@
     captchaSiteKey = undefined;
     submit($form.email, $form.password, e.detail.token);
   }
+
+  function openInstanceSelection() {
+    modal.open(InstanceSelection);
+  }
 </script>
 
 <Container>
@@ -89,10 +97,12 @@
     <h1>Welcome back to Awbar!</h1>
     <h3>It's great to see you again!</h3>
 
-    <form class="mt-6 flex flex-col space-y-3" on:submit={handleSubmit}>
-      <label for="instance">Connect to</label>
-      <Button type="button">{instance ? instance.domain : '...'}</Button>
+    <Modal bind:this={modal}
+      ><div class="my-3">
+        <Button on:click={openInstanceSelection}>{instance ? instance.domain : '...'}</Button>
+      </div></Modal>
 
+    <form class="mt-3 flex flex-col space-y-2" on:submit={handleSubmit}>
       <label for="email">Email</label>
       <Input
         id="email"

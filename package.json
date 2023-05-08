@@ -40,6 +40,8 @@
     "mobx": "^6.9.0",
     "svelte-forms-lib": "^2.0.1",
     "svelte-hcaptcha": "github:Stilic/svelte-hcaptcha",
+    "svelte-simple-modal": "^1.5.2",
+    "svelte-unicons": "^1.1.0",
     "ua-parser-js": "^1.0.35"
   },
   "type": "module"
