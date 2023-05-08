@@ -17,10 +17,10 @@ type ConnectedUser = {
 export default class App {
   @observable private static _initialized: boolean = false;
 
-  private static preferences: Storage<unknown> = new Storage('preferences');
+  static preferences: Storage<unknown> = new Storage('preferences');
 
   private static connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
-  @observable private static currentUser?: User;
+  @observable static currentUser?: User;
 
   static readonly defaultInstance: string = 'spacebar.stilic.ml';
   @observable static readonly instances: ObservableMap<string, Instance> = new ObservableMap();
@@ -108,5 +108,13 @@ export default class App {
 }
 
 makeObservable(App);
+
+reaction(
+  () => App.currentUser,
+  user => {
+    if (user) App.preferences.set('currentUser', `${user.instance.domain} ${user.id}`);
+    else App.preferences.remove('currentUser');
+  },
+);
 
 if (browser) App.init();

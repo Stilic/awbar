@@ -58,10 +58,7 @@ export default class Storage<T> {
     });
   }
 
-  async set(key: string, value: T) {
-    const storage = await this.initPromise;
-    storage[key] = value;
-
+  private async save(storage: Record<string, T>) {
     if (browser)
       Storage.keyPromise.then(key => {
         const iv = crypto.getRandomValues(new Uint8Array(16));
@@ -77,6 +74,12 @@ export default class Storage<T> {
       });
   }
 
+  async set(key: string, value: T) {
+    const storage = await this.initPromise;
+    storage[key] = value;
+    this.save(storage);
+  }
+
   async get(key: string) {
     const value = (await this.initPromise)[key];
     if (value) return value;
@@ -87,6 +90,7 @@ export default class Storage<T> {
     const storage = await this.initPromise;
     if (storage[key]) {
       delete storage[key];
+      this.save(storage);
       return true;
     } else return false;
   }
