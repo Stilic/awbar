@@ -30,7 +30,7 @@ import App from '../../App';
 export default class GatewayConnection {
   private readonly token: string;
   private socket?: WebSocket;
-  private dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void> = new Map();
+  private dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void>;
   private connectionStartTime?: number;
   private heartbeatInterval?: number;
   private heartbeater?: number;
@@ -63,12 +63,13 @@ export default class GatewayConnection {
     this.instance = instance;
     this.token = token;
 
+    this.dispatchHandlers = new Map();
+
     makeObservable(this);
   }
 
   async connect() {
-    // TODO: move url handling to the instance class
-    const socketUrl = new URL(`wss://${this.instance.domain}`);
+    const socketUrl = new URL((await this.instance.rest.domainsPromise).gateway);
     socketUrl.searchParams.append('v', '9');
     socketUrl.searchParams.append('encoding', 'json');
     console.debug(`${this.getLogBase('Connect')} ${socketUrl.href}`);
@@ -77,7 +78,6 @@ export default class GatewayConnection {
 
     this.socket.onopen = this.onSocketOpen;
     this.socket.onmessage = this.onSocketMessage;
-    // TODO: implement logs and error handler
     this.socket.onerror = this.onSocketError;
     this.socket.onclose = this.onSocketClose;
 

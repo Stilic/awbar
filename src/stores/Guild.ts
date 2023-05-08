@@ -55,11 +55,11 @@ export default class Guild {
   @observable nsfw_level: number;
   @observable hub_type?: number;
 
-  @observable readonly channels: ObservableMap<Snowflake, Channel> = new ObservableMap();
-  @observable readonly members: ObservableMap<Snowflake, GuildMember> = new ObservableMap();
-  @observable readonly roles: ObservableMap<Snowflake, Role> = new ObservableMap();
+  @observable readonly channels: ObservableMap<Snowflake, Channel>;
+  @observable readonly members: ObservableMap<Snowflake, GuildMember>;
+  @observable readonly roles: ObservableMap<Snowflake, Role>;
 
-  @observable readonly memberList: GuildMemberList = new GuildMemberList(this);
+  @observable readonly memberList: GuildMemberList;
 
   readonly instance: Instance;
 
@@ -111,8 +111,13 @@ export default class Guild {
     this.nsfw_level = data.properties.nsfw_level;
     if (data.properties.hub_type) this.hub_type = data.properties.hub_type;
 
-    // FIXME: hack to prevent errors after guild creation where channels is undefined
-    if (data.channels) data.channels.forEach(channel => this.addChannel(channel));
+    this.channels = new ObservableMap();
+    this.members = new ObservableMap();
+    this.roles = new ObservableMap();
+
+    this.memberList = new GuildMemberList(this);
+
+    data.channels.forEach(channel => this.addChannel(channel));
     data.roles.forEach(role => this.addRole(role));
 
     this.instance = instance;

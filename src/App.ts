@@ -20,32 +20,24 @@ export default class App {
   private static preferences: Storage<unknown> = new Storage('preferences');
 
   private static connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
-  @observable private static _currentUser?: User;
+  @observable private static currentUser?: User;
 
   static readonly defaultInstance: string = 'spacebar.stilic.ml';
-  @observable static readonly instances: ObservableMap<string, Instance> = new ObservableMap<
-    string,
-    Instance
-  >();
+  @observable static readonly instances: ObservableMap<string, Instance> = new ObservableMap();
 
   @computed
   static get initialized(): boolean {
     return this._initialized;
   }
 
-  @computed
-  static get currentUser(): User | undefined {
-    return this._currentUser;
-  }
-
   @action
   private static initCurrentUser(connection: GatewayConnection) {
-    if (!this._currentUser) {
+    if (!this.currentUser) {
       const userReaction = reaction(
         () => connection.user,
         user => {
           if (user) {
-            this._currentUser = user;
+            this.currentUser = user;
             goto('/channels/@me');
             userReaction();
           }

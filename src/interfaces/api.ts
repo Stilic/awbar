@@ -107,3 +107,10 @@ export enum APIErrorCodes {
   ACCOUNT_DELETED = 20011,
   ACCOUNT_DISABLED = 20013,
 }
+
+export interface IAPIDomainsPoliciesResponse {
+  cdn: string;
+  gateway: string;
+  defaultApiVersion: string;
+  apiEndpoint: string;
+}
