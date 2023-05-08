@@ -30,6 +30,7 @@ export default class Instance {
   addConnection(token: string) {
     const connection = new GatewayConnection(this, token);
     this.connections.push(connection);
+    connection.connect();
     return connection;
   }
 

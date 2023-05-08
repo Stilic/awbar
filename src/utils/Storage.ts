@@ -1,10 +1,10 @@
 import {browser} from '$app/environment';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
-const encoder = new TextEncoder();
-const decoder = new TextDecoder();
-
 export default class Storage<T> {
+  private static readonly encoder: TextEncoder = new TextEncoder();
+  private static readonly decoder: TextDecoder = new TextDecoder();
+
   private static keyPromise: Promise<CryptoKey>;
 
   readonly id: string;
@@ -13,23 +13,34 @@ export default class Storage<T> {
   constructor(id: string) {
     this.id = id;
 
-    if (browser && !Storage.keyPromise) {
+    if (!Storage.keyPromise) {
       const keyParams = {name: 'AES-CBC', length: 256};
-      Storage.keyPromise = FingerprintJS.load({monitoring: false})
-        .then(agent => agent.get())
-        .then(result =>
-          crypto.subtle.importKey('raw', encoder.encode(result.visitorId), 'PBKDF2', false, [
-            'deriveBits',
-          ]),
-        )
-        .then(key =>
-          crypto.subtle.deriveBits(
-            {name: 'PBKDF2', salt: new Uint8Array(16), iterations: 100000, hash: 'SHA-256'},
-            key,
-            keyParams.length,
-          ),
-        )
-        .then(key => crypto.subtle.importKey('raw', key, keyParams, false, ['encrypt', 'decrypt']));
+      Storage.keyPromise = new Promise(resolve => {
+        if (browser)
+          FingerprintJS.load({monitoring: false})
+            .then(agent => agent.get())
+            .then(result =>
+              crypto.subtle.importKey(
+                'raw',
+                Storage.encoder.encode(result.visitorId),
+                'PBKDF2',
+                false,
+                ['deriveBits'],
+              ),
+            )
+            .then(key =>
+              crypto.subtle.deriveBits(
+                {name: 'PBKDF2', salt: new Uint8Array(16), iterations: 100000, hash: 'SHA-256'},
+                key,
+                keyParams.length,
+              ),
+            )
+            .then(key =>
+              resolve(
+                crypto.subtle.importKey('raw', key, keyParams, false, ['encrypt', 'decrypt']),
+              ),
+            );
+      });
     }
 
     this.initPromise = new Promise(resolve => {
@@ -41,7 +52,7 @@ export default class Storage<T> {
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           crypto.subtle
             .decrypt({name: 'AES-CBC', iv: bytes.slice(0, 16)}, key, bytes.slice(16))
-            .then(buffer => resolve(JSON.parse(decoder.decode(buffer))));
+            .then(buffer => resolve(JSON.parse(Storage.decoder.decode(buffer))));
         } else resolve({});
       });
     });
@@ -55,7 +66,7 @@ export default class Storage<T> {
       Storage.keyPromise.then(key => {
         const iv = crypto.getRandomValues(new Uint8Array(16));
         crypto.subtle
-          .encrypt({name: 'AES-CBC', iv}, key, encoder.encode(JSON.stringify(storage)))
+          .encrypt({name: 'AES-CBC', iv}, key, Storage.encoder.encode(JSON.stringify(storage)))
           .then(buffer => {
             const bytes = new Uint8Array(buffer);
             const value = new Uint8Array(iv.length + bytes.length);

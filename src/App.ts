@@ -1,10 +1,11 @@
-import {ObservableMap, action, computed, makeObservable, observable, runInAction} from 'mobx';
+import {ObservableMap, action, computed, makeObservable, observable, reaction} from 'mobx';
 import Instance from './stores/Instance';
 import type User from './stores/objects/User';
 import Storage from './utils/Storage';
-import {Routes, type APIUser, type Snowflake} from '@spacebarchat/spacebar-api-types/v9';
+import type {Snowflake} from '@spacebarchat/spacebar-api-types/v9';
 import {goto} from '$app/navigation';
 import {browser} from '$app/environment';
+import type GatewayConnection from './stores/objects/GatewayConnection';
 
 type ConnectedUser = {
   username: string;
@@ -16,7 +17,9 @@ type ConnectedUser = {
 export default class App {
   @observable private static _initialized: boolean = false;
 
-  private static connectedUsers: Storage<Record<Snowflake, ConnectedUser>>;
+  private static preferences: Storage<unknown> = new Storage('preferences');
+
+  private static connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
   @observable private static _currentUser?: User;
 
   static readonly defaultInstance: string = 'spacebar.stilic.ml';
@@ -36,29 +39,48 @@ export default class App {
   }
 
   @action
+  private static initCurrentUser(connection: GatewayConnection) {
+    if (!this._currentUser) {
+      const userReaction = reaction(
+        () => connection.user,
+        user => {
+          if (user) {
+            this._currentUser = user;
+            goto('/channels/@me');
+            userReaction();
+          }
+        },
+      );
+    }
+  }
+
+  @action
   static init() {
     if (!this._initialized) {
-      this.connectedUsers = new Storage('users');
       this.connectedUsers.keys().then(domains => {
-        for (const domain of domains) {
-          if (!this.instances.has(domain)) this.addInstance(domain);
-          const instance = this.instances.get(domain)!;
-          this.connectedUsers.get(domain)!.then(users => {
-            for (const id in users) {
-              const token = users[id].token;
-              // TODO: store current user
-              if (!this._currentUser)
-                instance.rest.get<APIUser>(Routes.user(id), undefined, token).then(user => {
-                  instance.addUser(user);
-                  runInAction(() => (this._currentUser = instance.users.get(id)));
-                  goto('/channels/@me');
-                });
-              instance.addConnection(token);
-            }
-          });
-        }
+        App.preferences.get('currentUser').then(user => {
+          let props: string[];
+          if (user) props = (user as string).split(' ');
 
-        if (domains.length <= 0) goto('/login');
+          for (const domain of domains) {
+            if (!this.instances.has(domain)) this.addInstance(domain);
+            const instance = this.instances.get(domain)!;
+            this.connectedUsers.get(domain)!.then(users => {
+              for (const id in users) {
+                const token = users[id].token;
+                const connection = instance.addConnection(token);
+                if (user) {
+                  if (props[0] == domain && props[1] == id) App.initCurrentUser(connection);
+                } else {
+                  App.preferences.set('currentUser', `${instance.domain} ${id}`);
+                  App.initCurrentUser(connection);
+                }
+              }
+            });
+          }
+
+          if (domains.length <= 0) goto('/login');
+        });
       });
 
       this.addInstance(this.defaultInstance);
@@ -77,6 +99,9 @@ export default class App {
         avatar: user.avatar,
         token: token,
       };
+      App.preferences.get('currentUser').then(currentUser => {
+        if (!currentUser) App.preferences.set('currentUser', `${user.instance.domain} ${user.id}`);
+      });
       this.connectedUsers.set(user.instance.domain, users);
     });
   }

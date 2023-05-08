@@ -25,7 +25,6 @@
               () => connection.ready,
               value => {
                 if (value) {
-                  App.currentUser = connection.user;
                   goto('/channels/@me');
                   readyReaction();
                 }

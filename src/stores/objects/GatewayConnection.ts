@@ -59,23 +59,11 @@ export default class GatewayConnection {
     return this._user;
   }
 
-  @action
-  private setReady(value: boolean) {
-    this._ready = value;
-  }
-
-  @action
-  private setUser(value: User) {
-    this._user = value;
-  }
-
   constructor(instance: Instance, token: string) {
     this.instance = instance;
     this.token = token;
 
     makeObservable(this);
-
-    this.connect();
   }
 
   async connect() {
@@ -268,6 +256,7 @@ export default class GatewayConnection {
   };
 
   // dispatch handlers
+  @action
   private onReady = (data: GatewayReadyDispatchData) => {
     console.info(`${this.getLogBase('Ready')} took ${Date.now() - this.connectionStartTime!}ms`);
 
@@ -276,8 +265,8 @@ export default class GatewayConnection {
     this.instance.addUser(data.user);
 
     const user = this.instance.users.get(data.user.id)!;
-    this.setUser(user);
     App.saveUser(user, this.token);
+    this._user = user;
 
     // TODO: store guilds
     for (const guild of data.guilds) this.instance.addGuild(guild);
@@ -293,7 +282,7 @@ export default class GatewayConnection {
       } user(s), ${data.private_channels.length} private channel(s)`,
     );
 
-    this.setReady(true);
+    this._ready = true;
   };
 
   private onGuildCreate = (data: GatewayGuildCreateDispatchData) => {
@@ -409,10 +398,11 @@ export default class GatewayConnection {
     });
   };
 
+  @action
   private cleanup = () => {
     this.stopHeartbeater();
     this.socket = undefined;
-    this.setReady(false);
+    this._ready = false;
   };
 
   private reset = () => {
