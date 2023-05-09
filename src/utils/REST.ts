@@ -8,7 +8,7 @@ import type {APIInstanceDomains} from '../interfaces/api';
 import {Routes} from '@spacebarchat/spacebar-api-types/v9';
 
 export default class REST {
-  private static readonly _defaultHeaders: Record<string, string> = {
+  private static readonly _defaultHeaders = {
     mode: 'cors',
     accept: 'application/json',
     'Content-Type': 'application/json',

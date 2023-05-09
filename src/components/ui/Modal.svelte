@@ -16,6 +16,7 @@
 </script>
 
 <Modal
+  closeOnOuterClick={false}
   unstyled={true}
   classBg="fixed top-0 left-0 w-screen h-screen flex flex-col justify-center bg-black/[.35]"
   classWindowWrap="relative m-2 max-h-full"

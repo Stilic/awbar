@@ -18,25 +18,46 @@ export default class App {
 
   static preferences: Storage<unknown> = new Storage('preferences');
 
-  private static _connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
-  @observable static currentUser?: User;
-
-  static readonly defaultInstance: string = 'spacebar.stilic.ml';
+  static readonly defaultInstance = 'spacebar.stilic.ml';
   @observable static readonly instances: ObservableMap<string, Instance> = new ObservableMap();
+  @observable private static _currentInstance?: Instance;
+
+  private static _connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
+  @observable private static _currentUser?: User;
 
   @computed
   static get initialized(): boolean {
     return this._initialized;
   }
 
+  @computed
+  static get currentInstance(): Instance | undefined {
+    return this._currentInstance;
+  }
+
+  @computed
+  static get currentUser(): User | undefined {
+    return this._currentUser;
+  }
+
+  @action
+  static setCurrentInstance(instance?: Instance) {
+    this._currentInstance = instance;
+  }
+
+  @action
+  static setCurrentUser(user?: User) {
+    this._currentUser = user;
+  }
+
   @action
   private static initCurrentUser(connection: GatewayConnection) {
-    if (!this.currentUser) {
+    if (!this._currentUser) {
       const userReaction = reaction(
         () => connection.user,
         user => {
           if (user) {
-            this.currentUser = user;
+            this.setCurrentUser(user);
             userReaction();
           }
         },
@@ -50,7 +71,11 @@ export default class App {
       this._connectedUsers.keys().then(domains => {
         App.preferences.get('currentUser').then(user => {
           let props: string[];
-          if (user) props = (user as string).split(' ');
+          if (user) {
+            props = (user as string).split(' ');
+            this.addInstance(props[0]);
+            App.setCurrentInstance(this.instances.get(props[0]));
+          }
 
           for (const domain of domains) {
             if (!this.instances.has(domain)) this.addInstance(domain);
@@ -72,6 +97,9 @@ export default class App {
       });
 
       this.addInstance(this.defaultInstance);
+      this.addInstance('old.server.spacebar.chat');
+
+      if (!App.currentInstance) App.setCurrentInstance(this.instances.get(this.defaultInstance));
 
       this._initialized = true;
     }
@@ -121,8 +149,10 @@ makeObservable(App);
 reaction(
   () => App.currentUser,
   user => {
-    if (user) App.preferences.set('currentUser', `${user.instance.domain} ${user.id}`);
-    else App.preferences.remove('currentUser');
+    if (user) {
+      App.preferences.set('currentUser', `${user.instance.domain} ${user.id}`);
+      App.setCurrentInstance(user.instance);
+    } else App.preferences.remove('currentUser');
   },
 );
 
