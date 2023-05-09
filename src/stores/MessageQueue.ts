@@ -27,7 +27,7 @@ export interface QueuedMessage {
 }
 
 export default class MessageQueue {
-  @observable private readonly messages: IObservableArray<QueuedMessage> = observable.array();
+  @observable private readonly _messages: IObservableArray<QueuedMessage> = observable.array();
 
   constructor() {
     makeObservable(this);
@@ -40,26 +40,26 @@ export default class MessageQueue {
       timestamp: new Date(),
       status: QueuedMessageStatus.SENDING,
     };
-    this.messages.push(queuedMessage);
+    this._messages.push(queuedMessage);
     return queuedMessage;
   }
 
   @action
   remove(id: string) {
-    const message = this.messages.find(x => x.id === id);
-    if (message) return this.messages.remove(message);
+    const message = this._messages.find(x => x.id === id);
+    if (message) return this._messages.remove(message);
     else return false;
   }
 
   @action
   send(id: string) {
-    const message = this.messages.find(x => x.id === id)!;
+    const message = this._messages.find(x => x.id === id)!;
     if (message) message.status = QueuedMessageStatus.SENDING;
   }
 
   @action
   error(id: string, error: string) {
-    const message = this.messages.find(x => x.id === id)!;
+    const message = this._messages.find(x => x.id === id)!;
     if (message) {
       message.error = error;
       message.status = QueuedMessageStatus.FAILED;
@@ -67,7 +67,7 @@ export default class MessageQueue {
   }
 
   get(channel: Snowflake) {
-    return this.messages.filter(message => message.channel === channel);
+    return this._messages.filter(message => message.channel === channel);
   }
 
   @action

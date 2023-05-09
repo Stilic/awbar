@@ -4,9 +4,10 @@
   import {goto} from '$app/navigation';
   import {reaction} from 'mobx';
   import type {
-    IAPILoginRequest,
-    IAPILoginResponse,
-    IAPILoginResponseError,
+    APIInstanceConfiguration,
+    APILoginRequest,
+    APILoginResponse,
+    APILoginResponseError,
   } from '../../interfaces/api';
   import Button from '../../components/ui/Button.svelte';
   import Container from '../../components/ui/Container.svelte';
@@ -20,6 +21,9 @@
   let modal: Modal;
 
   let instance: Instance = Array.from(App.instances.values())[0];
+  let configuration: APIInstanceConfiguration;
+  $: instance.getConfiguration().then(config => (configuration = config));
+
   let captchaSiteKey: string | undefined;
   let captcha: HCaptcha;
 
@@ -33,7 +37,7 @@
 
   function submit(email: string, password: string, captcha_key?: string) {
     instance.rest
-      .post<IAPILoginRequest, IAPILoginResponse>('auth/login', {
+      .post<APILoginRequest, APILoginResponse>('auth/login', {
         login: email,
         password: password,
         captcha_key: captcha_key,
@@ -56,7 +60,7 @@
           console.error('error on login');
         }
       })
-      .catch((r: AxiosError<IAPILoginResponseError>) => {
+      .catch((r: AxiosError<APILoginResponseError>) => {
         // TODO: add support for other captcha services
         if (r.response) {
           if ('captcha_key' in r.response.data) {
@@ -98,8 +102,18 @@
     <h3>It's great to see you again!</h3>
 
     <Modal bind:this={modal}
-      ><div class="my-3">
-        <Button on:click={openInstanceSelection}>{instance ? instance.domain : '...'}</Button>
+      ><div class="my-2">
+        <p>Connect to</p>
+        <Button on:click={openInstanceSelection}>
+          {#if configuration}
+            {#if configuration.image}
+              <img src={configuration.image} alt={configuration.instanceName + ' Logo'} />
+            {/if}
+            {configuration.instanceName}
+          {:else}
+            ...
+          {/if}
+        </Button>
       </div></Modal>
 
     <form class="mt-3 flex flex-col space-y-2" on:submit={handleSubmit}>

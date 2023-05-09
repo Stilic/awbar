@@ -1,4 +1,6 @@
-export interface IAPILoginResponseMFARequired {
+import type {Snowflake} from '@spacebarchat/spacebar-api-types/globals';
+
+export interface APILoginResponseMFARequired {
   token: null;
   mfa: true;
   sms: boolean;
@@ -6,14 +8,14 @@ export interface IAPILoginResponseMFARequired {
   ticket: string;
 }
 
-export type IAPIRecatchaErrorCodes =
+export type APIRecatchaErrorCodes =
   | 'missing-input-secret'
   | 'invalid-input-secret'
   | 'missing-input-response'
   | 'invalid-input-response'
   | 'bad-request'
   | 'timeout-or-duplicate';
-export type IAPIHCaptchaErrorCodes =
+export type APIHCaptchaErrorCodes =
   | 'missing-input-secret'
   | 'invalid-input-secret'
   | 'missing-input-response'
@@ -23,23 +25,23 @@ export type IAPIHCaptchaErrorCodes =
   | 'not-using-dummy-passcode'
   | 'sitekey-secret-mismatch';
 
-export interface IAPILoginResponseCaptchaRequiredRecaptcha {
-  captcha_key: ['captcha-required' & IAPIRecatchaErrorCodes];
+export interface APILoginResponseCaptchaRequiredRecaptcha {
+  captcha_key: ['captcha-required' & APIRecatchaErrorCodes];
   captcha_sitekey: string;
   captcha_service: 'recaptcha';
 }
 
-export interface IAPILoginResponseCaptchaRequiredHCaptcha {
-  captcha_key: ['captcha-required' & IAPIHCaptchaErrorCodes];
+export interface APILoginResponseCaptchaRequiredHCaptcha {
+  captcha_key: ['captcha-required' & APIHCaptchaErrorCodes];
   captcha_sitekey: string;
   captcha_service: 'hcaptcha';
 }
 
-export type IAPIResponseCaptchaRequired =
-  | IAPILoginResponseCaptchaRequiredRecaptcha
-  | IAPILoginResponseCaptchaRequiredHCaptcha;
+export type APIResponseCaptchaRequired =
+  | APILoginResponseCaptchaRequiredRecaptcha
+  | APILoginResponseCaptchaRequiredHCaptcha;
 
-export interface IAPILoginResponseSuccess {
+export interface APILoginResponseSuccess {
   token: string;
   settings: {
     locale: string;
@@ -47,7 +49,7 @@ export interface IAPILoginResponseSuccess {
   };
 }
 
-export interface IAPIError {
+export interface APIError {
   code: number;
   message: string;
   errors?: {
@@ -60,14 +62,14 @@ export interface IAPIError {
   };
 }
 
-export type IAPILoginResponse = IAPILoginResponseSuccess | IAPILoginResponseMFARequired;
+export type APILoginResponse = APILoginResponseSuccess | APILoginResponseMFARequired;
 
-export type IAPILoginResponseError =
-  | IAPILoginResponseMFARequired
-  | IAPIResponseCaptchaRequired
-  | IAPIError;
+export type APILoginResponseError =
+  | APILoginResponseMFARequired
+  | APIResponseCaptchaRequired
+  | APIError;
 
-export interface IAPILoginRequest {
+export interface APILoginRequest {
   login: string;
   password: string;
   undelete?: boolean;
@@ -76,7 +78,7 @@ export interface IAPILoginRequest {
   gift_code_sku_id?: string;
 }
 
-export interface IAPIRegisterRequest {
+export interface APIRegisterRequest {
   username: string;
   password?: string;
   consent: boolean;
@@ -89,16 +91,16 @@ export interface IAPIRegisterRequest {
   promotional_email_opt_in?: boolean;
 }
 
-export type IAPIRegisterResponseError = IAPIResponseCaptchaRequired | IAPIError;
+export type APIRegisterResponseError = APIResponseCaptchaRequired | APIError;
 
-export interface IAPITOTPRequest {
+export interface APITOTPRequest {
   code: string;
   ticket: string;
   gift_code_sku_id?: string | null;
   login_source?: string | null;
 }
 
-export interface IAPIPasswordResetRequest {
+export interface APIPasswordResetRequest {
   login: string;
   captcha_key?: string;
 }
@@ -108,7 +110,19 @@ export enum APIErrorCodes {
   ACCOUNT_DISABLED = 20013,
 }
 
-export interface IAPIDomainsPoliciesResponse {
+export interface APIInstanceConfiguration {
+  instanceName: string;
+  instanceDescription: string | null;
+  frontPage: string | null;
+  tosPage: string | null;
+  correspondenceEmail: string | null;
+  correspondenceUserID: string | null;
+  image: string | null;
+  instanceId: Snowflake;
+  autoCreateBotUsers: boolean;
+}
+
+export interface APIInstanceDomains {
   cdn: string;
   gateway: string;
   defaultApiVersion: string;

@@ -1,17 +1,25 @@
 import {ObservableMap, action, makeObservable, observable, type IObservableArray} from 'mobx';
 import REST from '../utils/REST';
 import User from './objects/User';
-import type {APIChannel, APIUser, GatewayGuild} from '@spacebarchat/spacebar-api-types/v9';
+import {
+  Routes,
+  type APIChannel,
+  type APIUser,
+  type GatewayGuild,
+} from '@spacebarchat/spacebar-api-types/v9';
 import Guild from './Guild';
 import Channel from './Channel';
 import GatewayConnection from './objects/GatewayConnection';
 import MessageQueue from './MessageQueue';
+import type {APIInstanceConfiguration} from '../interfaces/api';
 
 export default class Instance {
   @observable readonly domain: string;
 
   readonly rest: REST;
   @observable readonly connections: IObservableArray<GatewayConnection>;
+
+  private readonly _configuration: Promise<APIInstanceConfiguration>;
 
   @observable readonly users: ObservableMap<string, User>;
   @observable readonly guilds: ObservableMap<string, Guild>;
@@ -25,6 +33,8 @@ export default class Instance {
     this.rest = new REST(this);
     this.connections = observable.array();
 
+    this._configuration = this.rest.get<APIInstanceConfiguration>(Routes.instance());
+
     this.users = new ObservableMap();
     this.guilds = new ObservableMap();
     this.privateChannels = new ObservableMap();
@@ -32,6 +42,10 @@ export default class Instance {
     this.queue = new MessageQueue();
 
     makeObservable(this);
+  }
+
+  async getConfiguration(): Promise<APIInstanceConfiguration> {
+    return this._configuration;
   }
 
   @action

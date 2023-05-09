@@ -49,7 +49,7 @@ export default class Channel {
   @observable default_thread_rate_limit_per_user: number;
   @observable channel_icon?: string;
 
-  @observable private readonly messages: IObservableArray<Message> = observable.array();
+  @observable private readonly _messages: IObservableArray<Message> = observable.array();
 
   readonly instance: Instance;
 
@@ -160,28 +160,28 @@ export default class Channel {
   @action
   add(data: APIMessage) {
     const message = new Message(data, this);
-    this.messages.push(message);
+    this._messages.push(message);
     return message;
   }
 
   get(id: string) {
-    return this.messages.find(message => message.id === id);
+    return this._messages.find(message => message.id === id);
   }
 
   getAll() {
-    return this.messages
+    return this._messages
       .slice()
       .sort((a, b) => a.creationDate.getTime() - b.creationDate.getTime());
   }
 
   has(id: string) {
-    return this.messages.some(message => message.id === id);
+    return this._messages.some(message => message.id === id);
   }
 
   @action
   remove(id: string) {
     const message = this.get(id);
-    if (message) return this.messages.remove(message);
+    if (message) return this._messages.remove(message);
     else return false;
   }
 

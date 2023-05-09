@@ -28,17 +28,17 @@ import {action, computed, makeObservable, observable, runInAction} from 'mobx';
 import App from '../../App';
 
 export default class GatewayConnection {
-  private readonly token: string;
-  private socket?: WebSocket;
-  private dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void>;
-  private connectionStartTime?: number;
-  private heartbeatInterval: number = 0;
-  private heartbeater?: number;
-  private initialHeartbeatTimeout?: number;
-  private sequence: number = 0;
-  private heartbeatAck: boolean = true;
-  private sessionId?: string;
-  private resumeUrl?: string;
+  private readonly _token: string;
+  private _socket?: WebSocket;
+  private _dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void>;
+  private _connectionStartTime?: number;
+  private _heartbeatInterval: number = 0;
+  private _heartbeater?: number;
+  private _initialHeartbeatTimeout?: number;
+  private _sequence: number = 0;
+  private _heartbeatAck: boolean = true;
+  private _sessionId?: string;
+  private _resumeUrl?: string;
   @observable private _ready: boolean = false;
   @observable private _user?: User;
 
@@ -46,7 +46,7 @@ export default class GatewayConnection {
 
   @computed
   get open(): boolean {
-    if (this.socket) return this.socket.readyState == WebSocket.OPEN;
+    if (this._socket) return this._socket.readyState == WebSocket.OPEN;
     else return false;
   }
 
@@ -62,9 +62,9 @@ export default class GatewayConnection {
 
   constructor(instance: Instance, token: string) {
     this.instance = instance;
-    this.token = token;
+    this._token = token;
 
-    this.dispatchHandlers = new Map();
+    this._dispatchHandlers = new Map();
 
     makeObservable(this);
   }
@@ -73,35 +73,35 @@ export default class GatewayConnection {
     this.disconnect();
 
     const socketUrl = new URL(
-      resume && this.resumeUrl ? this.resumeUrl : (await this.instance.rest.domainsPromise).gateway,
+      resume && this._resumeUrl ? this._resumeUrl : await this.instance.rest.getGatewayUrl(),
     );
     socketUrl.searchParams.append('v', '9');
     socketUrl.searchParams.append('encoding', 'json');
     console.debug(`${this.getLogBase('Connect')} ${socketUrl.href}`);
-    this.connectionStartTime = Date.now();
-    this.socket = new WebSocket(socketUrl);
+    this._connectionStartTime = Date.now();
+    this._socket = new WebSocket(socketUrl);
 
-    this.socket.onopen = this.onSocketOpen;
-    this.socket.onmessage = this.onSocketMessage;
-    this.socket.onerror = this.onSocketError;
-    this.socket.onclose = this.onSocketClose;
+    this._socket.onopen = this.onSocketOpen;
+    this._socket.onmessage = this.onSocketMessage;
+    this._socket.onerror = this.onSocketError;
+    this._socket.onclose = this.onSocketClose;
 
-    this.dispatchHandlers.set(GatewayDispatchEvents.Ready, this.onReady);
-    this.dispatchHandlers.set(GatewayDispatchEvents.Resumed, this.onResume);
-    this.dispatchHandlers.set(GatewayDispatchEvents.GuildCreate, this.onGuildCreate);
-    this.dispatchHandlers.set(GatewayDispatchEvents.GuildUpdate, this.onGuildUpdate);
-    this.dispatchHandlers.set(GatewayDispatchEvents.GuildDelete, this.onGuildDelete);
-    this.dispatchHandlers.set(
+    this._dispatchHandlers.set(GatewayDispatchEvents.Ready, this.onReady);
+    this._dispatchHandlers.set(GatewayDispatchEvents.Resumed, this.onResume);
+    this._dispatchHandlers.set(GatewayDispatchEvents.GuildCreate, this.onGuildCreate);
+    this._dispatchHandlers.set(GatewayDispatchEvents.GuildUpdate, this.onGuildUpdate);
+    this._dispatchHandlers.set(GatewayDispatchEvents.GuildDelete, this.onGuildDelete);
+    this._dispatchHandlers.set(
       GatewayDispatchEvents.GuildMemberListUpdate,
       this.onGuildMemberListUpdate,
     );
 
-    this.dispatchHandlers.set(GatewayDispatchEvents.ChannelCreate, this.onChannelCreate);
-    this.dispatchHandlers.set(GatewayDispatchEvents.ChannelDelete, this.onChannelDelete);
+    this._dispatchHandlers.set(GatewayDispatchEvents.ChannelCreate, this.onChannelCreate);
+    this._dispatchHandlers.set(GatewayDispatchEvents.ChannelDelete, this.onChannelDelete);
 
-    this.dispatchHandlers.set(GatewayDispatchEvents.MessageCreate, this.onMessageCreate);
-    this.dispatchHandlers.set(GatewayDispatchEvents.MessageUpdate, this.onMessageUpdate);
-    this.dispatchHandlers.set(GatewayDispatchEvents.MessageDelete, this.onMessageDelete);
+    this._dispatchHandlers.set(GatewayDispatchEvents.MessageCreate, this.onMessageCreate);
+    this._dispatchHandlers.set(GatewayDispatchEvents.MessageUpdate, this.onMessageUpdate);
+    this._dispatchHandlers.set(GatewayDispatchEvents.MessageDelete, this.onMessageDelete);
 
     // this.dispatchHandlers.set(GatewayDispatchEvents.PresenceUpdate, this.onPresenceUpdate);
 
@@ -109,25 +109,25 @@ export default class GatewayConnection {
       this.sendJson({
         op: GatewayOpcodes.Resume,
         d: {
-          token: this.token,
-          session_id: this.sessionId!,
-          seq: this.sequence,
+          token: this._token,
+          session_id: this._sessionId!,
+          seq: this._sequence,
         },
       });
   }
 
   disconnect(code?: number, reason?: string) {
-    if (this.socket) {
-      console.debug(`${this.getLogBase('Disconnect')} ${this.socket?.url}`);
-      this.socket?.close(code, reason);
+    if (this._socket) {
+      console.debug(`${this.getLogBase('Disconnect')} ${this._socket?.url}`);
+      this._socket?.close(code, reason);
       this.cleanup();
     }
   }
 
   private onSocketOpen = () => {
     console.debug(
-      `${this.getLogBase('Connected')} ${this.socket?.url} (took ${
-        Date.now() - this.connectionStartTime!
+      `${this.getLogBase('Connected')} ${this._socket?.url} (took ${
+        Date.now() - this._connectionStartTime!
       }ms)`,
     );
 
@@ -135,7 +135,7 @@ export default class GatewayConnection {
     const payload: GatewayIdentify = {
       op: GatewayOpcodes.Identify,
       d: {
-        token: this.token,
+        token: this._token,
         properties: {
           os: info.os.name ?? '',
           browser: info.browser.name ?? 'Spacebar Web',
@@ -161,7 +161,7 @@ export default class GatewayConnection {
     this.cleanup();
 
     if (e.code === 4004) {
-      App.removeUser(this.instance, this.token);
+      App.removeUser(this.instance, this._token);
       this.instance.connections.remove(this);
       return;
     }
@@ -194,7 +194,7 @@ export default class GatewayConnection {
         this.handleHello(payload.d);
         break;
       case GatewayOpcodes.HeartbeatAck:
-        this.heartbeatAck = true;
+        this._heartbeatAck = true;
         break;
       default:
         console.debug(`${this.getLogBase()} Received unknown opcode`);
@@ -203,80 +203,80 @@ export default class GatewayConnection {
   };
 
   private startHeartbeater = () => {
-    if (this.heartbeater) {
-      clearInterval(this.heartbeater);
-      this.heartbeater = undefined;
+    if (this._heartbeater) {
+      clearInterval(this._heartbeater);
+      this._heartbeater = undefined;
     }
 
     const heartbeaterFn = () => {
-      if (this.heartbeatAck) {
-        this.heartbeatAck = false;
+      if (this._heartbeatAck) {
+        this._heartbeatAck = false;
         this.sendHeartbeat();
       } else this.handleHeartbeatTimeout();
     };
 
-    this.initialHeartbeatTimeout = setTimeout(() => {
-      this.initialHeartbeatTimeout = undefined;
-      this.heartbeater = setInterval(heartbeaterFn, this.heartbeatInterval);
+    this._initialHeartbeatTimeout = setTimeout(() => {
+      this._initialHeartbeatTimeout = undefined;
+      this._heartbeater = setInterval(heartbeaterFn, this._heartbeatInterval);
       heartbeaterFn();
-    }, Math.floor(Math.random() * this.heartbeatInterval));
+    }, Math.floor(Math.random() * this._heartbeatInterval));
   };
 
   private stopHeartbeater = () => {
-    if (this.heartbeater) {
-      clearInterval(this.heartbeater);
-      this.heartbeater = undefined;
+    if (this._heartbeater) {
+      clearInterval(this._heartbeater);
+      this._heartbeater = undefined;
     }
 
-    if (this.initialHeartbeatTimeout) {
-      clearTimeout(this.initialHeartbeatTimeout);
-      this.initialHeartbeatTimeout = undefined;
+    if (this._initialHeartbeatTimeout) {
+      clearTimeout(this._initialHeartbeatTimeout);
+      this._initialHeartbeatTimeout = undefined;
     }
   };
 
   private handleDispatch = (data: GatewayDispatchPayload) => {
     console.debug(`${this.getLogBase()} -> ${data.t}`, data.d);
-    this.sequence = data.s;
-    const handler = this.dispatchHandlers.get(data.t);
+    this._sequence = data.s;
+    const handler = this._dispatchHandlers.get(data.t);
     if (handler) handler(data.d);
   };
 
   private sendJson(payload: GatewaySendPayload) {
-    if (this.socket) {
-      if (this.socket.readyState !== WebSocket.OPEN) return;
+    if (this._socket) {
+      if (this._socket.readyState !== WebSocket.OPEN) return;
       console.debug(`${this.getLogBase()} <- ${payload.op}`, payload);
-      this.socket.send(JSON.stringify(payload));
+      this._socket.send(JSON.stringify(payload));
     }
   }
 
   private handleHello = (data: GatewayHelloData) => {
     console.info(
       `${this.getLogBase('Hello')} heartbeat interval: ${data.heartbeat_interval} (took ${
-        Date.now() - this.connectionStartTime!
+        Date.now() - this._connectionStartTime!
       }ms)`,
     );
-    this.heartbeatInterval = data.heartbeat_interval;
+    this._heartbeatInterval = data.heartbeat_interval;
     this.startHeartbeater();
   };
 
   private handleHeartbeatTimeout = () => {
     console.log('timeout');
-    this.socket?.close(4009);
+    this._socket?.close(4009);
     this.connect(true);
   };
 
   // dispatch handlers
   @action
   private onReady = (data: GatewayReadyDispatchData) => {
-    console.info(`${this.getLogBase('Ready')} took ${Date.now() - this.connectionStartTime!}ms`);
+    console.info(`${this.getLogBase('Ready')} took ${Date.now() - this._connectionStartTime!}ms`);
 
-    this.sessionId = data.session_id;
-    this.resumeUrl = data.resume_gateway_url;
+    this._sessionId = data.session_id;
+    this._resumeUrl = data.resume_gateway_url;
 
     this.instance.addUser(data.user);
 
     const user = this.instance.users.get(data.user.id)!;
-    App.saveUser(user, this.token);
+    App.saveUser(user, this._token);
     this._user = user;
 
     // TODO: store guilds
@@ -409,16 +409,16 @@ export default class GatewayConnection {
   private sendHeartbeat = () => {
     this.sendJson({
       op: GatewayOpcodes.Heartbeat,
-      d: this.sequence,
+      d: this._sequence,
     });
   };
 
   @action
   private cleanup = () => {
     this.stopHeartbeater();
-    this.socket = undefined;
+    this._socket = undefined;
     this._ready = false;
-    this.heartbeatAck = true;
+    this._heartbeatAck = true;
   };
 
   private getLogBase(event?: string): string {

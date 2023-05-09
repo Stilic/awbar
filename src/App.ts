@@ -18,7 +18,7 @@ export default class App {
 
   static preferences: Storage<unknown> = new Storage('preferences');
 
-  private static connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
+  private static _connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
   @observable static currentUser?: User;
 
   static readonly defaultInstance: string = 'spacebar.stilic.ml';
@@ -47,7 +47,7 @@ export default class App {
   @action
   static init() {
     if (!this._initialized) {
-      this.connectedUsers.keys().then(domains => {
+      this._connectedUsers.keys().then(domains => {
         App.preferences.get('currentUser').then(user => {
           let props: string[];
           if (user) props = (user as string).split(' ');
@@ -55,7 +55,7 @@ export default class App {
           for (const domain of domains) {
             if (!this.instances.has(domain)) this.addInstance(domain);
             const instance = this.instances.get(domain)!;
-            this.connectedUsers.get(domain)!.then(users => {
+            this._connectedUsers.get(domain)!.then(users => {
               for (const id in users) {
                 const token = users[id].token;
                 const connection = instance.addConnection(token);
@@ -78,7 +78,7 @@ export default class App {
   }
 
   static saveUser(user: User, token: string) {
-    this.connectedUsers.get(user.instance.domain).then(users => {
+    this._connectedUsers.get(user.instance.domain).then(users => {
       if (!users) users = {};
       users[user.id] = {
         username: user.username,
@@ -89,12 +89,12 @@ export default class App {
       App.preferences.get('currentUser').then(currentUser => {
         if (!currentUser) App.preferences.set('currentUser', `${user.instance.domain} ${user.id}`);
       });
-      this.connectedUsers.set(user.instance.domain, users);
+      this._connectedUsers.set(user.instance.domain, users);
     });
   }
 
   static removeUser(instance: Instance, token: string) {
-    this.connectedUsers.get(instance.domain).then(users => {
+    this._connectedUsers.get(instance.domain).then(users => {
       if (!users) return;
       for (const id in users) {
         const user = users[id];
@@ -103,7 +103,7 @@ export default class App {
           break;
         }
       }
-      this.connectedUsers.set(instance.domain, users);
+      this._connectedUsers.set(instance.domain, users);
     });
   }
 

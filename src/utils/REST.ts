@@ -4,11 +4,11 @@ import { persisted } from 'svelte-local-storage-store';
 import { get, type Writable } from 'svelte/store';
 */
 import type Instance from '../stores/Instance';
-import type {IAPIDomainsPoliciesResponse} from '../interfaces/api';
+import type {APIInstanceDomains} from '../interfaces/api';
 import {Routes} from '@spacebarchat/spacebar-api-types/v9';
 
 export default class REST {
-  private static readonly defaultHeaders: Record<string, string> = {
+  private static readonly _defaultHeaders: Record<string, string> = {
     mode: 'cors',
     accept: 'application/json',
     'Content-Type': 'application/json',
@@ -17,29 +17,32 @@ export default class REST {
   };
 
   readonly instance: Instance;
-  readonly domainsPromise: Promise<IAPIDomainsPoliciesResponse>;
+  private readonly _domainsPromise: Promise<APIInstanceDomains>;
 
   constructor(instance: Instance) {
     this.instance = instance;
-    this.domainsPromise = axios
-      .get<IAPIDomainsPoliciesResponse>(
+    this._domainsPromise = axios
+      .get<APIInstanceDomains>(
         new URL(`/api${Routes.instanceDomains()}`, `http://${this.instance.domain}`).href,
         {
-          headers: REST.defaultHeaders,
+          headers: REST._defaultHeaders,
         },
       )
       .then(r => r.data);
   }
 
+  async getGatewayUrl(): Promise<string> {
+    return this._domainsPromise.then(domains => domains.gateway);
+  }
+
   private async makeAPIUrl(path: string) {
-    const domains = await this.domainsPromise;
-    const url = new URL(domains.apiEndpoint);
+    const url = new URL((await this._domainsPromise).apiEndpoint);
     url.pathname += `/${path}`;
     return url.href;
   }
 
   async get<T>(path: string, queryParams: Record<string, any> = {}, token?: string): Promise<T> {
-    const headers = new AxiosHeaders(REST.defaultHeaders);
+    const headers = new AxiosHeaders(REST._defaultHeaders);
     if (token) headers.setAuthorization(token);
     return axios
       .get(await this.makeAPIUrl(path), {
@@ -55,7 +58,7 @@ export default class REST {
     queryParams: Record<string, any> = {},
     token?: string,
   ): Promise<U> {
-    const headers = new AxiosHeaders(REST.defaultHeaders);
+    const headers = new AxiosHeaders(REST._defaultHeaders);
     if (token) headers.setAuthorization(token);
     return axios
       .post(await this.makeAPIUrl(path), data, {
