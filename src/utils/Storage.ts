@@ -5,17 +5,17 @@ export default class Storage<T> {
   private static readonly _encoder: TextEncoder = new TextEncoder();
   private static readonly _decoder: TextDecoder = new TextDecoder();
 
-  private static _keyPromise: Promise<CryptoKey>;
-  private readonly _initPromise: Promise<Record<string, T>>;
+  private static _key: Promise<CryptoKey>;
+  private readonly _init: Promise<Record<string, T>>;
 
   readonly id: string;
 
   constructor(id: string) {
     this.id = id;
 
-    if (!Storage._keyPromise) {
+    if (!Storage._key) {
       const keyParams = {name: 'AES-CBC', length: 256};
-      Storage._keyPromise = new Promise(resolve => {
+      Storage._key = new Promise(resolve => {
         if (browser)
           FingerprintJS.load({monitoring: false})
             .then(agent => agent.get())
@@ -43,8 +43,8 @@ export default class Storage<T> {
       });
     }
 
-    this._initPromise = new Promise(resolve => {
-      Storage._keyPromise.then(key => {
+    this._init = new Promise(resolve => {
+      Storage._key.then(key => {
         const savedStorage = localStorage.getItem(this.id);
         if (savedStorage) {
           const binary = atob(savedStorage);
@@ -60,7 +60,7 @@ export default class Storage<T> {
 
   private async save(storage: Record<string, T>) {
     if (browser)
-      Storage._keyPromise.then(key => {
+      Storage._key.then(key => {
         const iv = crypto.getRandomValues(new Uint8Array(16));
         crypto.subtle
           .encrypt({name: 'AES-CBC', iv}, key, Storage._encoder.encode(JSON.stringify(storage)))
@@ -75,19 +75,19 @@ export default class Storage<T> {
   }
 
   async set(key: string, value: T) {
-    const storage = await this._initPromise;
+    const storage = await this._init;
     storage[key] = value;
     this.save(storage);
   }
 
   async get(key: string) {
-    const value = (await this._initPromise)[key];
+    const value = (await this._init)[key];
     if (value) return value;
     else return undefined;
   }
 
   async remove(key: string) {
-    const storage = await this._initPromise;
+    const storage = await this._init;
     if (storage[key]) {
       delete storage[key];
       this.save(storage);
@@ -96,6 +96,6 @@ export default class Storage<T> {
   }
 
   async keys() {
-    return Object.keys(await this._initPromise);
+    return Object.keys(await this._init);
   }
 }

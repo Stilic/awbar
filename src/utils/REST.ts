@@ -17,11 +17,11 @@ export default class REST {
   };
 
   readonly instance: Instance;
-  private readonly _domainsPromise: Promise<APIInstanceDomains>;
+  private readonly _domains: Promise<APIInstanceDomains>;
 
   constructor(instance: Instance) {
     this.instance = instance;
-    this._domainsPromise = axios
+    this._domains = axios
       .get<APIInstanceDomains>(
         new URL(`/api${Routes.instanceDomains()}`, `http://${this.instance.domain}`).href,
         {
@@ -32,11 +32,11 @@ export default class REST {
   }
 
   async getGatewayUrl(): Promise<string> {
-    return this._domainsPromise.then(domains => domains.gateway);
+    return this._domains.then(domains => domains.gateway);
   }
 
   private async makeAPIUrl(path: string) {
-    const url = new URL((await this._domainsPromise).apiEndpoint);
+    const url = new URL((await this._domains).apiEndpoint);
     url.pathname += `/${path}`;
     return url.href;
   }
