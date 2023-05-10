@@ -11,7 +11,7 @@ import Guild from './Guild';
 import Channel from './Channel';
 import GatewayConnection from './objects/GatewayConnection';
 import MessageQueue from './MessageQueue';
-import type {APIInstanceConfiguration} from '../interfaces/api';
+import type {APIInstancePolicies} from '../interfaces/api';
 
 export default class Instance {
   @observable readonly domain: string;
@@ -19,7 +19,7 @@ export default class Instance {
   readonly rest: REST;
   @observable readonly connections: IObservableArray<GatewayConnection>;
 
-  private readonly _configuration: Promise<APIInstanceConfiguration>;
+  private readonly _configuration: Promise<APIInstancePolicies>;
 
   @observable readonly users: ObservableMap<string, User>;
   @observable readonly guilds: ObservableMap<string, Guild>;
@@ -33,7 +33,7 @@ export default class Instance {
     this.rest = new REST(this);
     this.connections = observable.array();
 
-    this._configuration = this.rest.get<APIInstanceConfiguration>(Routes.instance());
+    this._configuration = this.rest.get<APIInstancePolicies>(Routes.instance());
 
     this.users = new ObservableMap();
     this.guilds = new ObservableMap();
@@ -44,7 +44,7 @@ export default class Instance {
     makeObservable(this);
   }
 
-  async getConfiguration(): Promise<APIInstanceConfiguration> {
+  async getConfiguration(): Promise<APIInstancePolicies> {
     return this._configuration;
   }
 

@@ -110,7 +110,7 @@ export enum APIErrorCodes {
   ACCOUNT_DISABLED = 20013,
 }
 
-export interface APIInstanceConfiguration {
+export interface APIInstancePolicies {
   instanceName: string;
   instanceDescription: string | null;
   frontPage: string | null;
@@ -122,7 +122,7 @@ export interface APIInstanceConfiguration {
   autoCreateBotUsers: boolean;
 }
 
-export interface APIInstanceDomains {
+export interface APIDomainsPolicies {
   cdn: string;
   gateway: string;
   defaultApiVersion: string;

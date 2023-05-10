@@ -19,6 +19,7 @@
 
 <h1>Select your instance</h1>
 
+<!-- TODO: switch to card design -->
 <div class="grid grid-cols-3 items-center gap-3 py-3">
   {#each [...App.instances.values()] as instance}
     {#await instance.getConfiguration() then config}

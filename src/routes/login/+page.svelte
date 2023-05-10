@@ -4,7 +4,7 @@
   import {goto} from '$app/navigation';
   import {reaction} from 'mobx';
   import type {
-    APIInstanceConfiguration,
+    APIInstancePolicies,
     APILoginRequest,
     APILoginResponse,
     APILoginResponseError,
@@ -21,7 +21,7 @@
 
   let modal: Modal;
 
-  let configuration: APIInstanceConfiguration | undefined;
+  let configuration: APIInstancePolicies | undefined;
   function updateConfiguration(instance?: Instance) {
     if (instance) instance.getConfiguration().then(config => (configuration = config));
     else configuration = undefined;
@@ -57,6 +57,7 @@
               () => connection.ready,
               value => {
                 if (value) {
+                  App.setCurrentUser(connection.user);
                   goto('/channels/@me');
                   readyReaction();
                 }

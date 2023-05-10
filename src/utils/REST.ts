@@ -4,7 +4,7 @@ import { persisted } from 'svelte-local-storage-store';
 import { get, type Writable } from 'svelte/store';
 */
 import type Instance from '../stores/Instance';
-import type {APIInstanceDomains} from '../interfaces/api';
+import type {APIDomainsPolicies} from '../interfaces/api';
 import {Routes} from '@spacebarchat/spacebar-api-types/v9';
 
 export default class REST {
@@ -12,18 +12,16 @@ export default class REST {
     mode: 'cors',
     accept: 'application/json',
     'Content-Type': 'application/json',
-    'Upgrade-Insecure-Requests': '1',
-    'Content-Security-Policy': 'upgrade-insecure-requests',
   };
 
   readonly instance: Instance;
-  private readonly _domains: Promise<APIInstanceDomains>;
+  private readonly _domains: Promise<APIDomainsPolicies>;
 
   constructor(instance: Instance) {
     this.instance = instance;
     this._domains = axios
-      .get<APIInstanceDomains>(
-        new URL(`/api${Routes.instanceDomains()}`, `http://${this.instance.domain}`).href,
+      .get<APIDomainsPolicies>(
+        new URL(`/api${Routes.instanceDomains()}`, `https://${this.instance.domain}`).href,
         {
           headers: REST._defaultHeaders,
         },
