@@ -35,13 +35,13 @@
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^3.4.1",
+    "@krowten/svelte-heroicons": "^0.1.0",
     "@spacebarchat/spacebar-api-types": "^0.37.46",
     "axios": "^1.4.0",
     "mobx": "^6.9.0",
     "svelte-forms-lib": "^2.0.1",
     "svelte-hcaptcha": "github:Stilic/svelte-hcaptcha",
     "svelte-simple-modal": "^1.5.2",
-    "svelte-unicons": "^1.1.0",
     "ua-parser-js": "^1.0.35"
   },
   "type": "module"

@@ -4,6 +4,9 @@ dependencies:
   '@fingerprintjs/fingerprintjs':
     specifier: ^3.4.1
     version: 3.4.1
+  '@krowten/svelte-heroicons':
+    specifier: ^0.1.0
+    version: 0.1.0
   '@spacebarchat/spacebar-api-types':
     specifier: ^0.37.46
     version: 0.37.46
@@ -22,9 +25,6 @@ dependencies:
   svelte-simple-modal:
     specifier: ^1.5.2
     version: 1.5.2(svelte@3.59.0)
-  svelte-unicons:
-    specifier: ^1.1.0
-    version: 1.1.0
   ua-parser-js:
     specifier: ^1.0.35
     version: 1.0.35
@@ -392,6 +392,13 @@ packages:
       '@jridgewell/resolve-uri': 3.1.0
       '@jridgewell/sourcemap-codec': 1.4.14
     dev: true
+
+  /@krowten/svelte-heroicons@0.1.0:
+    resolution: {integrity: sha512-GCe6LbSwje8WlHoVm2OoJl30sWBXgnJuJnVJ89L9tHuA3d7OHS+3Tgcmw7jJMgFQ1fBiB+OC6f2+uLgiV/jQ5w==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      heroicons: 2.0.18
+    dev: false
 
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -1277,6 +1284,10 @@ packages:
       function-bind: 1.1.1
     dev: true
 
+  /heroicons@2.0.18:
+    resolution: {integrity: sha512-3iaqznaz5GJ8Mox/eDfKHo7tYKuPiZV4vbg6pB6wjJhBa7ZKQlXT1KuUnsjkEiPy/ezyiqppOX6wUqYguMIq8w==}
+    dev: false
+
   /ignore@5.2.4:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
     engines: {node: '>= 4'}
@@ -2056,12 +2067,6 @@ packages:
     resolution: {integrity: sha512-kQ+9/bonxMMJe6dGTCPXBkYQQ4zF8rqqPp+PvTWOJB8QtB+Z0S/h7ZJRDZOAnkXTUClwd+Qmb2HHTIXVkjlSvA==}
     peerDependencies:
       svelte: ^3.31.2
-    dependencies:
-      svelte: 3.59.0
-    dev: false
-
-  /svelte-unicons@1.1.0:
-    resolution: {integrity: sha512-WfdvL5tKv/z9DHWi0xEvguVUig80eus1eW3stMfLTbVBVl9OtPgfdiPMXgNwxg99sH4zQPSIVF1wNgcEZikrww==}
     dependencies:
       svelte: 3.59.0
     dev: false
