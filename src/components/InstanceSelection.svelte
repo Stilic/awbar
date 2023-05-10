@@ -17,17 +17,19 @@
   }
 </script>
 
-{#each [...App.instances.values()] as instance}
-  {#await instance.getConfiguration() then config}
-    <div class="grid grid-flow-col items-center gap-2 py-3">
+<h1>Select your instance</h1>
+
+<div class="grid grid-cols-3 items-center gap-3 py-3">
+  {#each [...App.instances.values()] as instance}
+    {#await instance.getConfiguration() then config}
       <Button on:click={() => selectInstance(instance)}>
         {#if config.image}
           <img src={config.image} alt={`${config.instanceName} Logo`} />
         {/if}
         {config.instanceName}
       </Button>
-      <p>{instance.domain}</p>
-      <p>{config.instanceDescription}</p>
-    </div>
-  {/await}
-{/each}
+      <p class="truncate">{instance.domain}</p>
+      <p class="text-left">{config.instanceDescription}</p>
+    {/await}
+  {/each}
+</div>
