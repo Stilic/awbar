@@ -19,16 +19,16 @@
 
 <h1>Select your instance</h1>
 
-<div class="flex items-center justify-center gap-3 py-3">
+<div class="flex flex-col justify-center gap-3 py-3">
   {#each [...App.instances.values()] as instance}
     {#await instance.getConfiguration() then config}
       <Button on:click={() => selectInstance(instance)}>
-        <div class="flex flex-col items-center gap-0.5">
+        <div class="flex min-h-[2.5rem] items-center gap-2 text-left">
           {#if config.image}
-            <img class="inline w-3/6" src={config.image} alt={`${config.instanceName} Logo`} />
+            <img class="inline w-10" src={config.image} alt={`${config.instanceName} Logo`} />
           {/if}
           <p><b>{config.instanceName}</b></p>
-          <p>{config.instanceDescription}</p>
+          <p class="ml-auto truncate text-right">{config.instanceDescription}</p>
         </div>
       </Button>
     {/await}
