@@ -130,13 +130,13 @@ export default class Channel {
     makeObservable(this);
   }
 
+  getCreationDate() {
+    return new Date(this.created_at);
+  }
+
   @action
   update(data: APIChannel) {
     Object.assign(this, data);
-  }
-
-  getCreationDate() {
-    return new Date(this.created_at);
   }
 
   @action

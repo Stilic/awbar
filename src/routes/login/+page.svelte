@@ -104,13 +104,13 @@
 <Container>
   {#if captchaSiteKey}
     <h1>Let's check if you aren't a robot!</h1>
-    <br />
-    <div class="flex items-center">
+    <h3><i>Beep boop. Boop beep? </i></h3>
+    <div class="mt-3 flex justify-center">
       <HCaptcha sitekey={captchaSiteKey} on:success={handleCaptchaSucess} bind:this={captcha} />
     </div>
   {:else}
     <h1>Welcome back to Awbar!</h1>
-    <h3>It's great to see you again!</h3>
+    <h3><i>It's great to see you again!</i></h3>
 
     <Modal bind:this={modal}
       ><div class="my-2">

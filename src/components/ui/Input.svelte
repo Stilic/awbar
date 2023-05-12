@@ -11,6 +11,6 @@
 <style lang="postcss">
   input,
   textarea {
-    @apply rounded bg-neutral-800 p-1;
+    @apply rounded bg-neutral-800 p-1.5;
   }
 </style>

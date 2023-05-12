@@ -20,14 +20,17 @@ import {
   type GatewayReadyDispatchData,
   type GatewaySendPayload,
   type GatewayReceivePayload,
+  GatewayCloseCodes,
 } from '@spacebarchat/spacebar-api-types/v9';
 import type Instance from '../Instance';
-import UAParser from 'ua-parser-js';
+import UAParser, {type IResult} from 'ua-parser-js';
 import type User from './User';
 import {action, computed, makeObservable, observable, runInAction} from 'mobx';
 import App from '../../App';
 
 export default class GatewayConnection {
+  private static readonly userAgentData: IResult = UAParser();
+
   private readonly _token: string;
   private _socket?: WebSocket;
   private _dispatchHandlers: Map<GatewayDispatchEvents, (data: any) => void>;
@@ -131,18 +134,17 @@ export default class GatewayConnection {
       }ms)`,
     );
 
-    const info = UAParser();
     const payload: GatewayIdentify = {
       op: GatewayOpcodes.Identify,
       d: {
         token: this._token,
         properties: {
-          os: info.os.name ?? '',
-          browser: info.browser.name ?? 'Spacebar Web',
-          device: info.device.type ?? '',
+          os: GatewayConnection.userAgentData.os.name ?? '',
+          browser: GatewayConnection.userAgentData.browser.name ?? 'Awbar',
+          device: GatewayConnection.userAgentData.device.type ?? '',
           client_build_number: 0,
           release_channel: 'dev',
-          browser_user_agent: info.ua,
+          browser_user_agent: GatewayConnection.userAgentData.ua,
         },
         compress: false,
         presence: {
@@ -157,16 +159,22 @@ export default class GatewayConnection {
   };
 
   private onSocketClose = (e: CloseEvent) => {
-    console.log('socket close');
     this.cleanup();
 
-    if (e.code === 4004) {
-      App.removeUser(this.instance, this._token);
-      this.instance.connections.remove(this);
-      return;
+    switch (e.code) {
+      case GatewayCloseCodes.AuthenticationFailed:
+      case GatewayCloseCodes.InvalidShard:
+      case GatewayCloseCodes.ShardingRequired:
+      case GatewayCloseCodes.InvalidAPIVersion:
+      case GatewayCloseCodes.InvalidIntents:
+      case GatewayCloseCodes.DisallowedIntents:
+        App.removeUser(this.instance, this._token);
+        this.instance.connections.remove(this);
+        break;
+      default:
+        this.connect();
+        break;
     }
-
-    this.connect(true);
   };
 
   private onSocketError = (e: Event) => {
@@ -260,7 +268,6 @@ export default class GatewayConnection {
   };
 
   private handleHeartbeatTimeout = () => {
-    console.log('timeout');
     this._socket?.close(4009);
     this.connect(true);
   };
