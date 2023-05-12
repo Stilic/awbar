@@ -20,6 +20,6 @@
   unstyled={true}
   classBg="fixed top-0 left-0 w-screen h-screen flex flex-col justify-center bg-black/[.35]"
   classWindowWrap="relative m-2 max-h-full"
-  classWindow="relative min-w-[20rem] w-1/2 max-w-full max-h-full my-2 mx-auto text-orange-200 rounded shadow-md bg-slate-800"
+  classWindow="relative min-w-[20rem] w-2/5 max-h-full my-2 mx-auto text-orange-200 rounded shadow-md bg-slate-800"
   classContent="relative p-3 overflow-auto"
   closeButton={ModalCloseButton}><ModalContent bind:this={content}><slot /></ModalContent></Modal>

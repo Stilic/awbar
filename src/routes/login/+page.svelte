@@ -117,9 +117,6 @@
         <p>Connect to</p>
         <Button on:click={openInstanceSelection}>
           {#if configuration}
-            {#if configuration.image}
-              <img src={configuration.image} alt={`${configuration.instanceName} Logo`} />
-            {/if}
             {configuration.instanceName}
           {:else}
             ...
@@ -144,7 +141,7 @@
         on:change={handleChange}
         bind:value={$form.password} />
 
-      <a>Forgot your password?</a>
+      <a href="https://youareanidiot.cc">Forgot your password?</a>
 
       <Button type="submit">Submit</Button>
     </form>

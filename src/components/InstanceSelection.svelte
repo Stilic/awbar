@@ -19,18 +19,18 @@
 
 <h1>Select your instance</h1>
 
-<!-- TODO: switch to card design -->
-<div class="grid grid-cols-3 items-center gap-3 py-3">
+<div class="flex items-center justify-center gap-3 py-3">
   {#each [...App.instances.values()] as instance}
     {#await instance.getConfiguration() then config}
       <Button on:click={() => selectInstance(instance)}>
-        {#if config.image}
-          <img src={config.image} alt={`${config.instanceName} Logo`} />
-        {/if}
-        {config.instanceName}
+        <div class="flex flex-col items-center gap-0.5">
+          {#if config.image}
+            <img class="inline w-3/6" src={config.image} alt={`${config.instanceName} Logo`} />
+          {/if}
+          <p><b>{config.instanceName}</b></p>
+          <p>{config.instanceDescription}</p>
+        </div>
       </Button>
-      <p class="truncate">{instance.domain}</p>
-      <p class="text-left">{config.instanceDescription}</p>
     {/await}
   {/each}
 </div>
