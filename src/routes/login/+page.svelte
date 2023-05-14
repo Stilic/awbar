@@ -40,7 +40,6 @@
   });
 
   function submit(login: string, password: string, captcha_key?: string) {
-    console.log(login, password);
     if (App.currentInstance)
       App.currentInstance.rest
         .post<APILoginRequest, APILoginResponse>(Routes.login(), {
