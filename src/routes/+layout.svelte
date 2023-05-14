@@ -3,6 +3,7 @@
   import App from '../App';
   import '../app.css';
   import {goto} from '$app/navigation';
+  import {page} from '$app/stores';
 
   let ready: boolean = App.currentUser != undefined;
   if (!ready) {
@@ -14,8 +15,10 @@
       },
     );
     App.preferences.get('currentUser').then(value => {
-      if (!value) goto('/login').then(() => (ready = true));
-      else goto('/channels/@me');
+      if (!value) {
+        if ($page.route.id === '/register') ready = true;
+        else goto('/login').then(() => (ready = true));
+      } else goto('/channels/@me');
     });
   }
 </script>

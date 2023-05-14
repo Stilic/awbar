@@ -53,17 +53,6 @@
         .then(r => {
           // TODO: add support for mfa
           if ('token' in r && 'settings' in r) {
-            const connection = App.currentInstance!.addConnection(r.token);
-            const readyReaction = reaction(
-              () => connection.ready,
-              value => {
-                if (value) {
-                  App.setCurrentUser(connection.user);
-                  goto('/channels/@me');
-                  readyReaction();
-                }
-              },
-            );
           } else {
             console.error('error on login');
           }

@@ -19,6 +19,6 @@
   unstyled={true}
   classBg="fixed top-0 left-0 w-screen h-screen flex flex-col justify-center bg-black/[.35]"
   classWindowWrap="relative max-h-full"
-  classWindow="relative sm:w-2/5 sm:h-min sm:rounded sm:my-2 w-screen h-screen mx-auto shadow-md bg-neutral-700"
-  classContent="relative p-3 pl-8 overflow-auto"
+  classWindow="relative flex flex-col sm:w-2/5 sm:h-min sm:rounded sm:my-2 w-screen h-screen mx-auto shadow-md bg-neutral-700"
+  classContent="relative p-3 pt-0 overflow-auto"
   closeButton={ModalCloseButton}><ModalContent bind:this={content}><slot /></ModalContent></Modal>

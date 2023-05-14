@@ -35,7 +35,7 @@ export default class REST {
 
   private async makeAPIUrl(path: string) {
     const url = new URL((await this._domains).apiEndpoint);
-    url.pathname += `/${path}`;
+    url.pathname += path;
     return url.href;
   }
 

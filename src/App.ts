@@ -4,7 +4,6 @@ import type User from './stores/objects/User';
 import Storage from './utils/Storage';
 import type {Snowflake} from '@spacebarchat/spacebar-api-types/v9';
 import {browser} from '$app/environment';
-import type GatewayConnection from './stores/objects/GatewayConnection';
 
 type ConnectedUser = {
   username: string;
@@ -16,14 +15,16 @@ type ConnectedUser = {
 export default class App {
   @observable private static _initialized: boolean = false;
 
-  static preferences: Storage<unknown> = new Storage('preferences');
-
-  static readonly defaultInstance = 'spacebar.stilic.ml';
-  @observable static readonly instances: ObservableMap<string, Instance> = new ObservableMap();
   @observable private static _currentInstance?: Instance;
+  @observable private static _currentUser?: User;
 
   private static _connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
-  @observable private static _currentUser?: User;
+
+  static readonly defaultInstance = 'spacebar.stilic.ml';
+
+  static preferences: Storage<unknown> = new Storage('preferences');
+
+  @observable static readonly instances: ObservableMap<string, Instance> = new ObservableMap();
 
   @computed
   static get initialized(): boolean {
@@ -51,32 +52,10 @@ export default class App {
   }
 
   @action
-  private static initCurrentUser(connection: GatewayConnection) {
-    if (!this._currentUser) {
-      const userReaction = reaction(
-        () => connection.user,
-        user => {
-          if (user) {
-            this.setCurrentUser(user);
-            userReaction();
-          }
-        },
-      );
-    }
-  }
-
-  @action
   static init() {
     if (!this._initialized) {
       this._connectedUsers.keys().then(domains => {
         App.preferences.get('currentUser').then(user => {
-          let props: string[];
-          if (user) {
-            props = (user as string).split(' ');
-            this.addInstance(props[0]);
-            App.setCurrentInstance(this.instances.get(props[0]));
-          }
-
           for (const domain of domains) {
             if (!this.instances.has(domain)) this.addInstance(domain);
             const instance = this.instances.get(domain)!;
@@ -84,11 +63,23 @@ export default class App {
               for (const id in users) {
                 const token = users[id].token;
                 const connection = instance.addConnection(token);
-                if (user) {
-                  if (props[0] == domain && props[1] == id) App.initCurrentUser(connection);
-                } else {
-                  App.preferences.set('currentUser', `${instance.domain} ${id}`);
-                  App.initCurrentUser(connection);
+                if (
+                  !this._currentUser &&
+                  (!user ||
+                    ('domain' in user &&
+                      'userId' in user &&
+                      user.domain == domain &&
+                      user.userId == id))
+                ) {
+                  const userReaction = reaction(
+                    () => connection.user,
+                    user => {
+                      if (user) {
+                        this.setCurrentUser(user);
+                        userReaction();
+                      }
+                    },
+                  );
                 }
               }
             });
@@ -114,9 +105,6 @@ export default class App {
         avatar: user.avatar,
         token: token,
       };
-      App.preferences.get('currentUser').then(currentUser => {
-        if (!currentUser) App.preferences.set('currentUser', `${user.instance.domain} ${user.id}`);
-      });
       this._connectedUsers.set(user.instance.domain, users);
     });
   }
@@ -150,7 +138,10 @@ reaction(
   () => App.currentUser,
   user => {
     if (user) {
-      App.preferences.set('currentUser', `${user.instance.domain} ${user.id}`);
+      App.preferences.set('currentUser', {
+        domain: user.instance.domain,
+        userId: user.id,
+      });
       App.setCurrentInstance(user.instance);
     } else App.preferences.remove('currentUser');
   },
