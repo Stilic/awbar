@@ -8,7 +8,7 @@ export interface APILoginResponseMFARequired {
   ticket: string;
 }
 
-export type APIRecatchaErrorCodes =
+export type APIRecaptchaErrorCodes =
   | 'missing-input-secret'
   | 'invalid-input-secret'
   | 'missing-input-response'
@@ -26,7 +26,7 @@ export type APIHCaptchaErrorCodes =
   | 'sitekey-secret-mismatch';
 
 export interface APILoginResponseCaptchaRequiredRecaptcha {
-  captcha_key: ['captcha-required' & APIRecatchaErrorCodes];
+  captcha_key: ['captcha-required' & APIRecaptchaErrorCodes];
   captcha_sitekey: string;
   captcha_service: 'recaptcha';
 }

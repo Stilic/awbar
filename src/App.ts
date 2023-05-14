@@ -4,6 +4,7 @@ import type User from './stores/objects/User';
 import Storage from './utils/Storage';
 import type {Snowflake} from '@spacebarchat/spacebar-api-types/v9';
 import {browser} from '$app/environment';
+import {goto} from '$app/navigation';
 
 type ConnectedUser = {
   username: string;
@@ -93,6 +94,22 @@ export default class App {
       if (!App.currentInstance) App.setCurrentInstance(this.instances.get(this.defaultInstance));
 
       this._initialized = true;
+    }
+  }
+
+  static logIn(token: string) {
+    if (this.currentInstance) {
+      const connection = this.currentInstance.addConnection(token);
+      const readyReaction = reaction(
+        () => connection.ready,
+        value => {
+          if (value) {
+            App.setCurrentUser(connection.user);
+            goto('/channels/@me');
+            readyReaction();
+          }
+        },
+      );
     }
   }
 

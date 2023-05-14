@@ -11,7 +11,7 @@ import Guild from './Guild';
 import Channel from './Channel';
 import GatewayConnection from './objects/GatewayConnection';
 import MessageQueue from './MessageQueue';
-import type {APIInstancePolicies} from '../interfaces/api';
+import type {APIInstancePolicies} from '../utils/interfaces/api';
 
 export default class Instance {
   @observable readonly domain: string;

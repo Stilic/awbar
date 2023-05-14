@@ -25,6 +25,10 @@
   textarea {
     @apply focus:outline focus:outline-1 focus:outline-zinc-200;
   }
+  ::-webkit-calendar-picker-indicator,
+  ::-ms-reveal {
+    @apply invert;
+  }
 }
 
 @tailwind components;

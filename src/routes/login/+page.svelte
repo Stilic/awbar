@@ -1,24 +1,23 @@
 <script lang="ts">
   import {createForm} from 'svelte-forms-lib';
   import App from '../../App';
-  import {goto} from '$app/navigation';
   import {reaction} from 'mobx';
   import type {
     APIInstancePolicies,
     APILoginRequest,
     APILoginResponse,
     APILoginResponseError,
-  } from '../../interfaces/api';
+  } from '../../utils/interfaces/api';
   import Button from '../../components/ui/Button.svelte';
   import Container from '../../components/ui/Container.svelte';
   import Input from '../../components/ui/Input.svelte';
   import Modal from '../../components/ui/Modal.svelte';
-  import HCaptcha from 'svelte-hcaptcha';
   import type {AxiosError} from 'axios';
   import InstanceSelection from '../../components/InstanceSelection.svelte';
   import {onDestroy} from 'svelte';
   import type Instance from '../../stores/Instance';
   import {Routes} from '@spacebarchat/spacebar-api-types/v9';
+  import Captcha from '../../components/Captcha.svelte';
 
   let modal: Modal;
 
@@ -31,66 +30,48 @@
   updateConfiguration(App.currentInstance);
 
   let captchaSiteKey: string | undefined;
-  let captcha: HCaptcha;
 
   const {form, handleChange, handleSubmit} = createForm({
     initialValues: {
-      email: '',
+      login: '',
       password: '',
     },
-    onSubmit: v => submit(v.email, v.password),
+    onSubmit: v => submit(v.login, v.password),
   });
 
-  function submit(email: string, password: string, captcha_key?: string) {
+  function submit(login: string, password: string, captcha_key?: string) {
+    console.log(login, password);
     if (App.currentInstance)
       App.currentInstance.rest
         .post<APILoginRequest, APILoginResponse>(Routes.login(), {
-          login: email,
+          login: login,
           password: password,
           captcha_key: captcha_key,
           undelete: false,
         })
         .then(r => {
           // TODO: add support for mfa
-          if ('token' in r && 'settings' in r) {
-            const connection = App.currentInstance!.addConnection(r.token);
-            const readyReaction = reaction(
-              () => connection.ready,
-              value => {
-                if (value) {
-                  App.setCurrentUser(connection.user);
-                  goto('/channels/@me');
-                  readyReaction();
-                }
-              },
-            );
-          } else {
-            console.error('error on login');
-          }
+          if ('token' in r && 'settings' in r) App.logIn(r.token);
+          else console.error('error on login');
         })
         .catch((r: AxiosError<APILoginResponseError>) => {
           // TODO: add support for other captcha services
-          if (r.response) {
-            if ('captcha_key' in r.response.data) {
-              // captcha required
-              if (r.response.data.captcha_key[0] !== 'captcha-required') {
-                console.error('captcha error');
-              } else if (r.response.data.captcha_service !== 'hcaptcha') {
-                // recaptcha or something else
-                console.error('unsupported captcha service');
-              } else {
-                // hcaptcha
-                captchaSiteKey = r.response.data.captcha_sitekey;
-              }
-            }
+          if (r.response && 'captcha_key' in r.response.data) {
+            // captcha required
+            if (r.response.data.captcha_key[0] !== 'captcha-required')
+              console.error('captcha error');
+            else if (r.response.data.captcha_service !== 'hcaptcha')
+              // recaptcha or something else
+              console.error('unsupported captcha service');
+            // hcaptcha
+            else captchaSiteKey = r.response.data.captcha_sitekey;
           }
         });
   }
 
-  function handleCaptchaSucess(e: CustomEvent) {
-    captcha.reset();
+  function handleCaptchaSucess(token: string) {
     captchaSiteKey = undefined;
-    submit($form.email, $form.password, e.detail.token);
+    submit($form.login, $form.password, token);
   }
 
   onDestroy(() => {
@@ -100,11 +81,7 @@
 
 <Container>
   {#if captchaSiteKey}
-    <h1>Let's check if you aren't a robot!</h1>
-    <h3><i>Beep boop. Boop beep? </i></h3>
-    <div class="mt-3 flex justify-center">
-      <HCaptcha sitekey={captchaSiteKey} on:success={handleCaptchaSucess} bind:this={captcha} />
-    </div>
+    <Captcha siteKey={captchaSiteKey} successCallback={handleCaptchaSucess} />
   {:else}
     <h1>Welcome back to Awbar!</h1>
     <h3><i>It's great to see you again!</i></h3>
@@ -122,13 +99,13 @@
       </div></Modal>
 
     <form class="flex flex-col space-y-2" on:submit={handleSubmit}>
-      <label for="email">Email</label>
+      <label for="login">Email</label>
       <Input
-        id="email"
-        name="email"
+        id="login"
+        name="login"
         type="email"
         on:change={handleChange}
-        bind:value={$form.email} />
+        bind:value={$form.login} />
 
       <label for="password">Password</label>
       <Input
@@ -138,13 +115,14 @@
         on:change={handleChange}
         bind:value={$form.password} />
 
-      <a class="!mt-3" href="https://youareanidiot.cc">Forgot your password?</a>
+      <a href="https://youareanidiot.cc">Forgot your password?</a>
 
-      <Button type="submit">Login</Button>
-
-      <p>
-        Don't have an account? <a href="/register">Sign up</a>
-      </p>
+      <div class="!mt-3 flex flex-col gap-2">
+        <Button type="submit">Login</Button>
+        <p>
+          Don't have an account? <a href="/register">Sign up</a>
+        </p>
+      </div>
     </form>
   {/if}
 </Container>

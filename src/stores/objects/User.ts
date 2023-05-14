@@ -63,6 +63,8 @@ export default class User {
     this.instance = instance;
 
     makeObservable(this);
+
+    console.log(this.email);
   }
 
   @action

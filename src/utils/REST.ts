@@ -4,7 +4,7 @@ import { persisted } from 'svelte-local-storage-store';
 import { get, type Writable } from 'svelte/store';
 */
 import type Instance from '../stores/Instance';
-import type {APIDomainsPolicies} from '../interfaces/api';
+import type {APIDomainsPolicies} from './interfaces/api';
 import {Routes} from '@spacebarchat/spacebar-api-types/v9';
 
 export default class REST {
