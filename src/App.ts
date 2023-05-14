@@ -58,7 +58,7 @@ export default class App {
       this._connectedUsers.keys().then(domains => {
         App.preferences.get('currentUser').then(user => {
           for (const domain of domains) {
-            if (!this.instances.has(domain)) this.addInstance(domain);
+            this.addInstance(domain);
             const instance = this.instances.get(domain)!;
             this._connectedUsers.get(domain)!.then(users => {
               for (const id in users) {
@@ -88,6 +88,7 @@ export default class App {
         });
       });
 
+      // TODO: maybe add suggestions on instance selection?
       this.addInstance(this.defaultInstance);
       this.addInstance('old.server.spacebar.chat');
 
@@ -142,10 +143,7 @@ export default class App {
 
   @action
   static addInstance(domain: string) {
-    if (!this.instances.has(domain)) {
-      const instance = new Instance(domain);
-      this.instances.set(domain, instance);
-    }
+    if (!this.instances.has(domain)) this.instances.set(domain, new Instance(domain));
   }
 }
 

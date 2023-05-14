@@ -5,7 +5,6 @@
   import Button from './ui/Button.svelte';
   import type {Context} from 'svelte-simple-modal';
   import {runInAction} from 'mobx';
-  import ModalTitle from './ui/ModalTitle.svelte';
 
   const {close} = getContext('simple-modal') as Context;
 
@@ -18,7 +17,7 @@
   }
 </script>
 
-<ModalTitle>Select your instance</ModalTitle>
+<h1 class="mb-3">Select your instance</h1>
 
 <div class="flex flex-col justify-center gap-3 py-3">
   {#each [...App.instances.values()] as instance}
