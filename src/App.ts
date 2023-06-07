@@ -4,7 +4,6 @@ import type User from './stores/objects/User';
 import Storage from './utils/Storage';
 import type {Snowflake} from '@spacebarchat/spacebar-api-types/v9';
 import {browser} from '$app/environment';
-import {goto} from '$app/navigation';
 
 type ConnectedUser = {
   username: string;
@@ -16,7 +15,6 @@ type ConnectedUser = {
 export default class App {
   @observable private static _initialized: boolean = false;
 
-  @observable private static _currentInstance?: Instance;
   @observable private static _currentUser?: User;
 
   private static _connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
@@ -31,20 +29,9 @@ export default class App {
   static get initialized(): boolean {
     return this._initialized;
   }
-
-  @computed
-  static get currentInstance(): Instance | undefined {
-    return this._currentInstance;
-  }
-
   @computed
   static get currentUser(): User | undefined {
     return this._currentUser;
-  }
-
-  @action
-  static setCurrentInstance(instance?: Instance) {
-    this._currentInstance = instance;
   }
 
   @action
@@ -92,25 +79,7 @@ export default class App {
       this.addInstance(this.defaultInstance);
       this.addInstance('old.server.spacebar.chat');
 
-      if (!App.currentInstance) App.setCurrentInstance(this.instances.get(this.defaultInstance));
-
       this._initialized = true;
-    }
-  }
-
-  static logIn(token: string) {
-    if (this.currentInstance) {
-      const connection = this.currentInstance.addConnection(token);
-      const readyReaction = reaction(
-        () => connection.ready,
-        value => {
-          if (value) {
-            App.setCurrentUser(connection.user);
-            goto('/channels/@me');
-            readyReaction();
-          }
-        },
-      );
     }
   }
 
@@ -152,13 +121,12 @@ makeObservable(App);
 reaction(
   () => App.currentUser,
   user => {
-    if (user) {
+    if (user)
       App.preferences.set('currentUser', {
         domain: user.instance.domain,
         userId: user.id,
       });
-      App.setCurrentInstance(user.instance);
-    } else App.preferences.remove('currentUser');
+    else App.preferences.remove('currentUser');
   },
 );
 

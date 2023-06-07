@@ -1,20 +1,13 @@
 <script lang="ts">
+  import type Instance from '../stores/Instance';
   import {getContext} from 'svelte';
   import App from '../App';
-  import type Instance from '../stores/Instance';
   import Button from './ui/Button.svelte';
   import type {Context} from 'svelte-simple-modal';
-  import {runInAction} from 'mobx';
 
   const {close} = getContext('simple-modal') as Context;
 
-  function selectInstance(instance: Instance) {
-    runInAction(() => {
-      App.setCurrentInstance(instance);
-      App.setCurrentUser(undefined);
-    });
-    close();
-  }
+  export let onInstanceSelection: (instance: Instance) => void;
 </script>
 
 <h1 class="mb-3">Select your instance</h1>
@@ -22,7 +15,11 @@
 <div class="flex flex-col justify-center gap-3 py-3">
   {#each [...App.instances.values()] as instance}
     {#await instance.getConfiguration() then config}
-      <Button on:click={() => selectInstance(instance)}>
+      <Button
+        on:click={() => {
+          if (onInstanceSelection) onInstanceSelection(instance);
+          close();
+        }}>
         <div class="flex flex-col items-center gap-2 md:flex-row">
           {#if config.image}
             <img class="inline w-12" src={config.image} alt={`${config.instanceName} Logo`} />

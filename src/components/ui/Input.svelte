@@ -1,6 +1,5 @@
 <script lang="ts">
   export let type:
-    | 'button'
     | 'checkbox'
     | 'color'
     | 'date'
@@ -21,8 +20,7 @@
     | 'textarea'
     | 'time'
     | 'url'
-    | 'week'
-    | undefined;
+    | 'week' = 'text';
 </script>
 
 {#if type == 'textarea'}

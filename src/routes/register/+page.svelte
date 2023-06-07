@@ -1,9 +1,7 @@
 <script lang="ts">
   import {createForm} from 'svelte-forms-lib';
   import App from '../../App';
-  import {reaction} from 'mobx';
   import type {
-    APIInstancePolicies,
     APILoginResponse,
     APILoginResponseError,
     APIRegisterRequest,
@@ -11,23 +9,15 @@
   import Button from '../../components/ui/Button.svelte';
   import Container from '../../components/ui/Container.svelte';
   import Input from '../../components/ui/Input.svelte';
-  import Modal from '../../components/ui/Modal.svelte';
   import type {AxiosError} from 'axios';
-  import InstanceSelection from '../../components/InstanceSelection.svelte';
-  import {onDestroy} from 'svelte';
   import {Routes} from '@spacebarchat/spacebar-api-types/v9';
   import Captcha from '../../components/Captcha.svelte';
+  import InstanceSelectButton from '../../components/InstanceSelectButton.svelte';
+  import type Instance from '../../stores/Instance';
+  import {reaction} from 'mobx';
+  import {goto} from '$app/navigation';
 
-  let modal: Modal;
-
-  let configuration: Promise<APIInstancePolicies>;
-  if (App.currentInstance) configuration = App.currentInstance.getConfiguration();
-  const currentInstanceReaction = reaction(
-    () => App.currentInstance,
-    instance => {
-      if (instance) configuration = instance.getConfiguration();
-    },
-  );
+  let currentInstance: Instance;
 
   let captchaSiteKey: string | undefined;
 
@@ -48,8 +38,8 @@
     date_of_birth: string,
     captcha_key?: string,
   ) {
-    if (App.currentInstance)
-      App.currentInstance.rest
+    if (currentInstance)
+      currentInstance.rest
         .post<APIRegisterRequest, APILoginResponse>(Routes.register(), {
           email: email,
           username: username,
@@ -60,8 +50,19 @@
         })
         .then(r => {
           // TODO: add support for mfa
-          if ('token' in r && 'settings' in r) App.logIn(r.token);
-          else console.error('error on register');
+          if ('token' in r && 'settings' in r) {
+            const connection = currentInstance.addConnection(r.token);
+            const readyReaction = reaction(
+              () => connection.ready,
+              value => {
+                if (value) {
+                  App.setCurrentUser(connection.user);
+                  goto('/channels/@me');
+                  readyReaction();
+                }
+              },
+            );
+          } else console.error('error on register');
         })
         .catch((r: AxiosError<APILoginResponseError>) => {
           // TODO: add support for other captcha services
@@ -82,10 +83,6 @@
     captchaSiteKey = undefined;
     submit($form.email, $form.username, $form.password, $form.date_of_birth, token);
   }
-
-  onDestroy(() => {
-    currentInstanceReaction();
-  });
 </script>
 
 <Container>
@@ -94,17 +91,10 @@
   {:else}
     <h1>Create an account</h1>
 
-    <Modal bind:this={modal}
-      ><div class="my-3">
-        <p>Create the account on</p>
-        <Button on:click={() => modal.open(InstanceSelection)}>
-          {#await configuration}
-            ...
-          {:then conf}
-            {conf.instanceName}
-          {/await}
-        </Button>
-      </div></Modal>
+    <div class="my-3">
+      <p>Create the account on</p>
+      <InstanceSelectButton bind:currentInstance />
+    </div>
 
     <form class="flex flex-col space-y-2" on:submit={handleSubmit}>
       <label for="email">Email</label>
