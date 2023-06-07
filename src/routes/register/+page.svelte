@@ -15,19 +15,19 @@
   import type {AxiosError} from 'axios';
   import InstanceSelection from '../../components/InstanceSelection.svelte';
   import {onDestroy} from 'svelte';
-  import type Instance from '../../stores/Instance';
   import {Routes} from '@spacebarchat/spacebar-api-types/v9';
   import Captcha from '../../components/Captcha.svelte';
 
   let modal: Modal;
 
-  let configuration: APIInstancePolicies | undefined;
-  function updateConfiguration(instance?: Instance) {
-    if (instance) instance.getConfiguration().then(config => (configuration = config));
-    else configuration = undefined;
-  }
-  const currentInstanceReaction = reaction(() => App.currentInstance, updateConfiguration);
-  updateConfiguration(App.currentInstance);
+  let configuration: Promise<APIInstancePolicies>;
+  if (App.currentInstance) configuration = App.currentInstance.getConfiguration();
+  const currentInstanceReaction = reaction(
+    () => App.currentInstance,
+    instance => {
+      if (instance) configuration = instance.getConfiguration();
+    },
+  );
 
   let captchaSiteKey: string | undefined;
 
@@ -98,11 +98,11 @@
       ><div class="my-3">
         <p>Create the account on</p>
         <Button on:click={() => modal.open(InstanceSelection)}>
-          {#if configuration}
-            {configuration.instanceName}
-          {:else}
+          {#await configuration}
             ...
-          {/if}
+          {:then conf}
+            {conf.instanceName}
+          {/await}
         </Button>
       </div></Modal>
 
