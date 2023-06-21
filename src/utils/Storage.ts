@@ -14,7 +14,7 @@ export default class Storage<T> {
     this.id = id;
 
     if (!Storage._key) {
-      const keyParams = {name: 'AES-CBC', length: 256};
+      const keyParams = {name: 'AES-GCM', length: 256};
       Storage._key = new Promise(resolve => {
         if (browser)
           FingerprintJS.load({monitoring: false})
@@ -30,7 +30,7 @@ export default class Storage<T> {
             )
             .then(key =>
               crypto.subtle.deriveBits(
-                {name: 'PBKDF2', salt: new Uint8Array(16), iterations: 100000, hash: 'SHA-256'},
+                {name: 'PBKDF2', salt: new Uint8Array(12), iterations: 100000, hash: 'SHA-256'},
                 key,
                 keyParams.length,
               ),
@@ -51,7 +51,7 @@ export default class Storage<T> {
           const bytes = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           crypto.subtle
-            .decrypt({name: 'AES-CBC', iv: bytes.slice(0, 16)}, key, bytes.slice(16))
+            .decrypt({name: 'AES-GCM', iv: bytes.slice(0, 12)}, key, bytes.slice(12))
             .then(buffer => resolve(JSON.parse(Storage._decoder.decode(buffer))));
         } else resolve({});
       });
@@ -61,9 +61,9 @@ export default class Storage<T> {
   private async save(storage: Record<string, T>) {
     if (browser)
       Storage._key.then(key => {
-        const iv = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
         crypto.subtle
-          .encrypt({name: 'AES-CBC', iv}, key, Storage._encoder.encode(JSON.stringify(storage)))
+          .encrypt({name: 'AES-GCM', iv}, key, Storage._encoder.encode(JSON.stringify(storage)))
           .then(buffer => {
             const bytes = new Uint8Array(buffer);
             const value = new Uint8Array(iv.length + bytes.length);
