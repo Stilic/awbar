@@ -6,7 +6,7 @@
 
   let content: ModalContent;
 
-  export function open(component: typeof SvelteComponent, props?: Record<string, any>) {
+  export function open(component: typeof SvelteComponent<any>, props?: Record<string, any>) {
     content.context.open(component, props || {});
   }
 
