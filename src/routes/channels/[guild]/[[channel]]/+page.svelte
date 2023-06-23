@@ -1,6 +1,5 @@
 <script lang="ts">
-  import App from '../../../../App';
+  import GuildBar from '../../../../components/GuildBar.svelte';
 </script>
 
-<p>Dashboard</p>
-<p>{App.currentUser?.instanceTag}</p>
+<GuildBar />

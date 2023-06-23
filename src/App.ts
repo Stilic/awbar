@@ -15,7 +15,7 @@ type ConnectedUser = {
 export default class App {
   @observable private static _initialized: boolean = false;
 
-  @observable private static _currentUser?: User;
+  @observable private static _currentUser: User;
 
   private static _connectedUsers: Storage<Record<Snowflake, ConnectedUser>> = new Storage('users');
 
@@ -30,12 +30,12 @@ export default class App {
     return this._initialized;
   }
   @computed
-  static get currentUser(): User | undefined {
+  static get currentUser(): User {
     return this._currentUser;
   }
 
   @action
-  static setCurrentUser(user?: User) {
+  static setCurrentUser(user: User) {
     this._currentUser = user;
   }
 
