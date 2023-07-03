@@ -1,3 +1,7 @@
+<script lang="ts" context="module">
+  let _instance: Instance = App.instances.get(App.defaultInstance)!;
+</script>
+
 <script lang="ts">
   import App from '../App';
   import Modal from './ui/Modal.svelte';
@@ -7,11 +11,11 @@
 
   let modal: Modal;
 
-  export let currentInstance: Instance = App.instances.get(App.defaultInstance)!;
+  export let currentInstance: Instance = _instance;
 
   function onClick() {
     modal.open(InstanceSelectModal, {
-      onInstanceSelection: (instance: Instance) => (currentInstance = instance),
+      onInstanceSelection: (instance: Instance) => (currentInstance = _instance = instance),
     });
   }
 </script>

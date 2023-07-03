@@ -27,8 +27,8 @@ dependencies:
     specifier: github:Stilic/svelte-hcaptcha
     version: github.com/Stilic/svelte-hcaptcha/b66b05aa276ecd8bbec5c1ab011f5c4c5677d647
   svelte-simple-modal:
-    specifier: github:Stilic/svelte-simple-modal
-    version: github.com/Stilic/svelte-simple-modal/8a8a709bfd4c45ddf4e13f7e04f67d23fb1f5967(svelte@4.0.0)
+    specifier: ^1.6.1
+    version: 1.6.1(svelte@4.0.0)
   ua-parser-js:
     specifier: ^1.0.35
     version: 1.0.35
@@ -2196,6 +2196,14 @@ packages:
       typescript: 5.0.4
     dev: true
 
+  /svelte-simple-modal@1.6.1(svelte@4.0.0):
+    resolution: {integrity: sha512-D4/Z7LQ6ThawYb7FlAeS/qGbcwVlqzRHn1zZgWPlEK0cp4l2UMcscqel58mp+gTuk4UX9gl516GYXcHFvuyslA==}
+    peerDependencies:
+      svelte: ^3.30.0 || ^4.0.0
+    dependencies:
+      svelte: 4.0.0
+    dev: false
+
   /svelte@4.0.0:
     resolution: {integrity: sha512-+yCYu3AEUu9n91dnQNGIbnVp8EmNQtuF/YImW4+FTXRHard7NMo+yTsWzggPAbj3fUEJ1FBJLkql/jkp6YB5pg==}
     engines: {node: '>=16'}
@@ -2429,15 +2437,4 @@ packages:
     resolution: {tarball: https://codeload.github.com/Stilic/svelte-hcaptcha/tar.gz/b66b05aa276ecd8bbec5c1ab011f5c4c5677d647}
     name: svelte-hcaptcha
     version: 0.1.1
-    dev: false
-
-  github.com/Stilic/svelte-simple-modal/8a8a709bfd4c45ddf4e13f7e04f67d23fb1f5967(svelte@4.0.0):
-    resolution: {tarball: https://codeload.github.com/Stilic/svelte-simple-modal/tar.gz/8a8a709bfd4c45ddf4e13f7e04f67d23fb1f5967}
-    id: github.com/Stilic/svelte-simple-modal/8a8a709bfd4c45ddf4e13f7e04f67d23fb1f5967
-    name: svelte-simple-modal
-    version: 1.5.2
-    peerDependencies:
-      svelte: ^4.0.0
-    dependencies:
-      svelte: 4.0.0
     dev: false
